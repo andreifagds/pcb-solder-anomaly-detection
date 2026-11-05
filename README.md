@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/anomalib-2.2-0068b5" alt="anomalib 2.2">
   <img src="https://img.shields.io/badge/backbone-DINOv2%20ViT--B-6f42c1" alt="DINOv2 ViT-B">
   <img src="https://img.shields.io/badge/VRAM-%E2%88%9290%25-0ca30c" alt="VRAM -90%">
+  <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT license">
 </p>
 
 #### Aluno: Andrei Edio Fagundes
@@ -758,6 +759,10 @@ This repository is a clean version of the inspection core of a much bigger in-ho
   note         = {Advisor: Manoela Kohler}
 }
 ```
+
+### License
+
+The code is under the [MIT](LICENSE) license. The panel photos in `assets/photos` are here only to illustrate the work and may not be reused, and the images that come from VisA stay under the dataset's license (CC BY 4.0).
 
 ### Acknowledgments
 

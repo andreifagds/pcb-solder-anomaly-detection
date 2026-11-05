@@ -6,6 +6,8 @@ authors:
   - family-names: Fagundes
     given-names: Andrei Edio
 date-released: 2026-11-30
+license: MIT
+repository-code: "https://github.com/andreifagds/pcb-solder-anomaly-detection"
 keywords:
   - anomaly detection
   - PatchCore

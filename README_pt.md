@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/anomalib-2.2-0068b5" alt="anomalib 2.2">
   <img src="https://img.shields.io/badge/backbone-DINOv2%20ViT--B-6f42c1" alt="DINOv2 ViT-B">
   <img src="https://img.shields.io/badge/VRAM-%E2%88%9290%25-0ca30c" alt="VRAM -90%">
+  <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT license">
 </p>
 
 #### Aluno: Andrei Edio Fagundes
@@ -758,6 +759,10 @@ Este repositório é uma versão limpa do núcleo de inspeção de um sistema in
   note         = {Orientadora: Manoela Kohler}
 }
 ```
+
+### Licença
+
+O código está sob a licença [MIT](LICENSE). As fotos dos painéis em `assets/photos` servem só para ilustrar o trabalho e não podem ser reutilizadas, e as imagens que vêm do VisA continuam sob a licença do dataset (CC BY 4.0).
 
 ### Agradecimentos
 
