@@ -1,6 +1,7 @@
 """Figures for the public VisA PCB evidence (reads results/visa_results.json).
 
     python scripts/make_visa_figures.py --visa data/visa/VisA --split data/visa/1cls.csv
+    FIG_LANG=pt python scripts/make_visa_figures.py ...     # Portuguese versions, *_pt.png
 """
 
 from __future__ import annotations
@@ -16,17 +17,21 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "src"))
-import make_figures as mf  # noqa: E402  (palette + rcParams)
+import make_figures as mf  # noqa: E402  (palette + rcParams + language helpers)
 from eval_visa import CATS, load_split, read_mask, read_rgb  # noqa: E402
 from pcbad.visualize import heatmap, outline  # noqa: E402
 
 plt = mf.plt
 RES, FIG = mf.RES, mf.FIG
-LABEL = {"wide_resnet50": "WideResNet-50 (layer2)", "wide_resnet50_l23": "WideResNet-50 (layer2+3, paper)",
-         "dinov2_vits14": "DINOv2 ViT-S (block 8)", "dinov2_vitb14": "DINOv2 ViT-B (block 8, production)",
-         "dinov2_vitb14_b2": "DINOv2 ViT-B (block 2)"}
+T, N, out, ticks = mf.T, mf.N, mf.out, mf.decimal_ticks
+LABEL = {"wide_resnet50": "WideResNet-50 (layer2)",
+         "wide_resnet50_l23": T("WideResNet-50 (layer2+3, paper)", "WideResNet-50 (layer2+3, artigo)"),
+         "dinov2_vits14": T("DINOv2 ViT-S (block 8)", "DINOv2 ViT-S (bloco 8)"),
+         "dinov2_vitb14": T("DINOv2 ViT-B (block 8, production)", "DINOv2 ViT-B (bloco 8, produção)"),
+         "dinov2_vitb14_b2": T("DINOv2 ViT-B (block 2)", "DINOv2 ViT-B (bloco 2)")}
 COLOR = {"wide_resnet50": mf.AQUA, "wide_resnet50_l23": "#eda100", "dinov2_vits14": mf.ORANGE,
          "dinov2_vitb14": mf.BLUE, "dinov2_vitb14_b2": "#6250d6"}
+MEAN = T("mean", "média")
 
 
 def bars_backbones(R):
@@ -35,8 +40,9 @@ def bars_backbones(R):
         main["dinov2_vitb14_b2"] = R["layers"]["blocks.2"]
     keys = [k for k in LABEL if k in main]
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2), sharey=False)
-    for ax, metric, name in zip(axes, ["image_auroc", "pixel_auroc"], ["image AUROC (is the board defective?)",
-                                                                       "pixel AUROC (where is the defect?)"]):
+    names = [T("image AUROC (is the board defective?)", "AUROC de imagem (a placa tem defeito?)"),
+             T("pixel AUROC (where is the defect?)", "AUROC de pixel (onde está o defeito?)")]
+    for ax, metric, name in zip(axes, ["image_auroc", "pixel_auroc"], names):
         x = np.arange(len(CATS) + 1)
         w = 0.8 / len(keys)
         for i, k in enumerate(keys):
@@ -44,20 +50,22 @@ def bars_backbones(R):
             vals.append(np.mean(vals))
             off = (i - (len(keys) - 1) / 2) * w
             ax.bar(x + off, vals, w - 0.02, color=COLOR[k], label=LABEL[k])
-            ax.text(x[-1] + off, vals[-1] + 0.004, f"{vals[-1]:.3f}", ha="center", va="bottom",
+            ax.text(x[-1] + off, vals[-1] + 0.004, N(vals[-1], ".3f"), ha="center", va="bottom",
                     fontsize=7.5, color=mf.INK2, rotation=90)
-        ax.set_xticks(x, CATS + ["mean"])
+        ax.set_xticks(x, CATS + [MEAN])
         lo = min(main[k][c][metric] for k in keys for c in CATS)
         ax.set_ylim(max(0.5, np.floor(lo * 20) / 20 - 0.05), 1.03)
+        ticks(ax, "y")
         ax.set_title(name, loc="left", fontsize=10.5, color=mf.INK)
         ax.grid(axis="x", visible=False)
     h, lab = axes[0].get_legend_handles_labels()
     fig.legend(h, lab, loc="lower center", ncol=3, fontsize=8.5, bbox_to_anchor=(0.5, 0.0))
-    mf.title(fig, "Public PCBs (VisA): detection per backbone",
-             f"{R['setup']['n_train_per_category']} good training images per category · "
-             "same pipeline as the production line")
+    n = R["setup"]["n_train_per_category"]
+    mf.title(fig, T("Public PCBs (VisA): detection per backbone", "PCBs públicas (VisA): detecção por backbone"),
+             T(f"{n} good training images per category · same pipeline as the production line",
+               f"{n} imagens boas de treino por categoria · o mesmo pipeline da linha de produção"))
     fig.tight_layout(rect=(0, 0.12, 1, 0.86))
-    fig.savefig(FIG / "visa_backbones.png", dpi=160)
+    fig.savefig(out("visa_backbones.png"), dpi=160)
     plt.close(fig)
 
 
@@ -71,35 +79,40 @@ def story(R):
         ax.plot([int(k) ** 2 for k in ks], [R["mosaic"][k][c]["image_auroc"] for k in ks], marker="o", ms=4,
                 color=col, lw=1.6, label=c)
     mean = [np.mean([R["mosaic"][k][c]["image_auroc"] for c in CATS]) for k in ks]
-    ax.plot([int(k) ** 2 for k in ks], mean, color=mf.INK, lw=2.6, label="mean")
+    ax.plot([int(k) ** 2 for k in ks], mean, color=mf.INK, lw=2.6, label=MEAN)
     ax.set_xscale("log", base=2)
     ax.set_xticks([int(k) ** 2 for k in ks], [f"{int(k)**2}" for k in ks])
-    ax.set_xlabel("boards in the same image (k × k mosaic)")
-    ax.set_ylabel("image AUROC")
+    ax.set_xlabel(T("boards in the same image (k × k mosaic)", "placas na mesma imagem (mosaico k × k)"))
+    ax.set_ylabel(T("image AUROC", "AUROC de imagem"))
     ax.set_ylim(0.45, 1.02)
+    ticks(ax, "y")
     ax.axhline(0.5, color=mf.MUTED, lw=0.8, ls=(0, (3, 3)))
-    ax.text(1.05, 0.505, "chance", color=mf.INK2, fontsize=8, va="bottom")
-    ax.set_title("Attempt 1 · more boards per image, less signal", loc="left", fontsize=10.5)
+    ax.text(1.05, 0.505, T("chance", "chute"), color=mf.INK2, fontsize=8, va="bottom")
+    ax.set_title(T("Attempt 1 · more boards per image, less signal",
+                   "Tentativa 1 · mais placas por imagem, menos sinal"), loc="left", fontsize=10.5)
     ax.legend(fontsize=8, ncol=5, loc="upper center", bbox_to_anchor=(0.5, -0.2))
     # pooled
     ax = axes[1]
     x = np.arange(len(CATS))
     own = [R["pooled"]["per_category"][c]["image_auroc"] for c in CATS]
     pool = [R["pooled"]["pooled"][c]["image_auroc"] for c in CATS]
-    ax.bar(x - 0.2, own, 0.37, color=mf.BLUE, label="one model per board type")
-    ax.bar(x + 0.2, pool, 0.37, color=mf.ORANGE, label="one model for all four")
+    ax.bar(x - 0.2, own, 0.37, color=mf.BLUE, label=T("one model per board type", "um modelo por tipo de placa"))
+    ax.bar(x + 0.2, pool, 0.37, color=mf.ORANGE, label=T("one model for all four", "um modelo para as quatro"))
     for xi, a, b in zip(x, own, pool):
-        ax.text(xi + 0.2, b + 0.004, f"{b - a:+.3f}", ha="center", va="bottom", fontsize=8.5, color=mf.INK2)
+        ax.text(xi + 0.2, b + 0.004, N(b - a, "+.3f"), ha="center", va="bottom", fontsize=8.5, color=mf.INK2)
     ax.set_xticks(x, CATS)
     ax.set_ylim(max(0.5, min(own + pool) - 0.08), 1.03)
-    ax.set_ylabel("image AUROC")
-    ax.set_title("Attempt 2 · one model for four different boards", loc="left", fontsize=10.5)
+    ticks(ax, "y")
+    ax.set_ylabel(T("image AUROC", "AUROC de imagem"))
+    ax.set_title(T("Attempt 2 · one model for four different boards",
+                   "Tentativa 2 · um modelo para quatro placas diferentes"), loc="left", fontsize=10.5)
     ax.legend(fontsize=8.5, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.1))
     ax.grid(axis="x", visible=False)
-    mf.title(fig, "The first two attempts, tried on public PCBs", "VisA pcb1–pcb4 · DINOv2 ViT-B")
+    mf.title(fig, T("The first two attempts, tried on public PCBs", "As duas primeiras tentativas, refeitas em PCBs públicas"),
+             "VisA pcb1–pcb4 · DINOv2 ViT-B")
     fig.set_size_inches(11, 4.4)
     fig.tight_layout(rect=(0, 0, 1, 0.86))
-    fig.savefig(FIG / "visa_story.png", dpi=160)
+    fig.savefig(out("visa_story.png"), dpi=160)
     plt.close(fig)
 
 
@@ -109,26 +122,28 @@ def ablations(R):
     ax = axes[0]
     layers = list(R["layers"])
     xi = np.arange(len(layers))
-    for metric, col, lab in [("image_auroc", mf.BLUE, "image"), ("pixel_auroc", mf.ORANGE, "pixel")]:
+    for metric, col, lab in [("image_auroc", mf.BLUE, T("image AUROC", "AUROC de imagem")),
+                             ("pixel_auroc", mf.ORANGE, T("pixel AUROC", "AUROC de pixel"))]:
         ax.plot(xi, [np.mean([R["layers"][l][c][metric] for c in CATS]) for l in layers], marker="o", color=col,
-                label=f"{lab} AUROC")
+                label=lab)
     sizes_path = RES / "vitb_layer_sizes.json"
     sizes = json.loads(sizes_path.read_text()) if sizes_path.exists() else {}
     labels = []
     for l in layers:
         s = sizes.get(l)
-        extra = f"\n{s['backbone_mb']:.0f} MB\nsaves ≤{s['limit_saving']:.0%}" if s else ""
-        labels.append(l.replace("blocks.", "block ") + extra)
+        extra = T(f"\n{s['backbone_mb']:.0f} MB\nsaves ≤{s['limit_saving']:.0%}",
+                  f"\n{s['backbone_mb']:.0f} MB\neconomiza ≤{s['limit_saving']:.0%}") if s else ""
+        labels.append(l.replace("blocks.", T("block ", "bloco ")) + extra)
     ax.set_xticks(xi, labels, fontsize=8)
-    ax.set_title("Which ViT-B block (of 12)", loc="left", fontsize=10.5)
+    ax.set_title(T("Which ViT-B block (of 12)", "Qual bloco do ViT-B (de 12)"), loc="left", fontsize=10.5)
     ax.legend(fontsize=8.5, loc="lower left")
     # neighbors
     ax = axes[1]
     ns = ["1", "3", "9"]
     for c, col in zip(CATS, [mf.BLUE, mf.ORANGE, mf.AQUA, mf.INK2]):
         ax.plot(ns, [R["neighbors"][c][n] for n in ns], marker="o", ms=4, color=col, lw=1.6, label=c)
-    ax.set_xlabel("num_neighbors")
-    ax.set_title("Score re-weighting neighbors", loc="left", fontsize=10.5)
+    ax.set_xlabel(T("num_neighbors", "vizinhos (num_neighbors)"))
+    ax.set_title(T("Score re-weighting neighbors", "Vizinhos na reponderação da nota"), loc="left", fontsize=10.5)
     ax.legend(fontsize=8, ncol=2)
     # coreset
     ax = axes[2]
@@ -137,17 +152,21 @@ def ablations(R):
     auc = [np.mean([R["coreset"][c][r]["image_auroc"] for c in CATS]) for r in ratios]
     ax.plot(rows, auc, marker="o", color=mf.BLUE)
     for r, x_, y_ in zip(ratios, rows, auc):
-        ax.annotate(f"{float(r):g}", (x_, y_), xytext=(0, 6), textcoords="offset points", ha="center", fontsize=8,
-                    color=mf.INK2)
+        ax.annotate(f"{float(r):g}".replace(".", "," if mf.LANG == "pt" else "."), (x_, y_), xytext=(0, 6),
+                    textcoords="offset points", ha="center", fontsize=8, color=mf.INK2)
     ax.set_xscale("log")
     ax.set_ylim(0.70, 0.85)  # same span as the neighbors panel, so small differences look small
-    ax.set_xlabel("vectors kept in the memory bank (log)")
-    ax.set_title("Coreset ratio (labels) vs. mean image AUROC", loc="left", fontsize=10.5)
+    ax.set_xlabel(T("vectors kept in the memory bank (log)", "vetores guardados no banco (log)"))
+    ax.set_title(T("Coreset ratio (labels) vs. mean image AUROC", "Razão do coreset (rótulos) × AUROC médio"),
+                 loc="left", fontsize=10.5)
     for a in axes:
         a.set_ylabel("AUROC")
-    mf.title(fig, "Every parameter, tested on public PCBs", "VisA pcb1–pcb4 · DINOv2 ViT-B · means over the 4 categories unless noted")
+        ticks(a, "y")
+    mf.title(fig, T("Every parameter, tested on public PCBs", "Cada parâmetro, testado em PCBs públicas"),
+             T("VisA pcb1–pcb4 · DINOv2 ViT-B · means over the 4 categories unless noted",
+               "VisA pcb1–pcb4 · DINOv2 ViT-B · média das 4 categorias, salvo indicação"))
     fig.tight_layout(rect=(0, 0, 1, 0.85))
-    fig.savefig(FIG / "visa_ablations.png", dpi=160)
+    fig.savefig(out("visa_ablations.png"), dpi=160)
     plt.close(fig)
 
 
@@ -158,29 +177,34 @@ def threshold_hist(R, ex):
         thr = float(ex[f"{c}_thr"])
         y = np.array(R["_labels"][c])
         bins = np.linspace(min(s.min(), thr), max(s.max(), thr * 1.15) * 1.02, 30)
-        ax.hist(s[y == 0], bins=bins, color=mf.BLUE, alpha=0.85, label="good boards")
-        ax.hist(s[y == 1], bins=bins, color=mf.ORANGE, alpha=0.75, label="defective boards")
+        ax.hist(s[y == 0], bins=bins, color=mf.BLUE, alpha=0.85, label=T("good boards", "placas boas"))
+        ax.hist(s[y == 1], bins=bins, color=mf.ORANGE, alpha=0.75, label=T("defective boards", "placas com defeito"))
         ax.axvline(thr * 1.15, color=mf.INK, lw=1.4)
         res = R["main"]["dinov2_vitb14"][c]
-        ax.set_title(f"{c} · recall {res['recall']:.0%} · false alarms {res['false_alarm_rate']:.0%}", loc="left",
-                     fontsize=9.5)
-        ax.set_xlabel("PatchCore score")
+        ax.set_title(T(f"{c} · recall {res['recall']:.0%} · false alarms {res['false_alarm_rate']:.0%}",
+                       f"{c} · recall {res['recall']:.0%} · alarme falso {res['false_alarm_rate']:.0%}"),
+                     loc="left", fontsize=9.5)
+        ax.set_xlabel(T("PatchCore score", "nota do PatchCore"))
+        ticks(ax)
         ax.grid(axis="x", visible=False)
     axes[0].legend(fontsize=8)
-    axes[0].text(0.98, 0.95, "black line =\nthreshold × 1.15", transform=axes[0].transAxes, ha="right", va="top",
-                 fontsize=8, color=mf.INK2)
-    mf.title(fig, "A threshold calibrated without a single defective image",
-             "leave-one-out on the 100 good training images, quantile 0.90, × 1.15 · scored on unseen test boards")
+    axes[0].text(0.98, 0.95, T("black line =\nthreshold × 1.15", "linha preta =\nlimiar × 1,15"),
+                 transform=axes[0].transAxes, ha="right", va="top", fontsize=8, color=mf.INK2)
+    mf.title(fig, T("A threshold calibrated without a single defective image",
+                    "Um limiar calibrado sem nenhuma imagem com defeito"),
+             T("leave-one-out on the 100 good training images, quantile 0.90, × 1.15 · scored on unseen test boards",
+               "leave-one-out nas 100 imagens boas de treino, quantil 0,90, × 1,15 · avaliado em placas de teste nunca vistas"))
     fig.tight_layout(rect=(0, 0, 1, 0.82))
-    fig.savefig(FIG / "visa_threshold.png", dpi=160)
+    fig.savefig(out("visa_threshold.png"), dpi=160)
     plt.close(fig)
 
 
 def examples(R, ex8, ex2, split):
     """One defective board per category: input · ground truth · heat map at block 8 (production)
     · heat map at block 2 · outline drawn from block 2."""
-    cols = ["input", "ground truth (white)", "heat map, block 8\n(production setting)", "heat map, block 2",
-            "outline, block 2"]
+    cols = [T("input", "entrada"), T("ground truth (white)", "gabarito (branco)"),
+            T("heat map, block 8\n(production setting)", "mapa de calor, bloco 8\n(config. de produção)"),
+            T("heat map, block 2", "mapa de calor, bloco 2"), T("outline, block 2", "contorno, bloco 2")]
     fig, axes = plt.subplots(len(CATS), 5, figsize=(12, 2.55 * len(CATS)))
     for r, c in enumerate(CATS):
         items = split[c]["test"]
@@ -215,7 +239,7 @@ def examples(R, ex8, ex2, split):
                 ax.set_title(cols[j], fontsize=9.5, color=mf.INK)
         axes[r, 0].set_ylabel(c, fontsize=10, color=mf.INK2)
     fig.tight_layout()
-    fig.savefig(FIG / "visa_examples.png", dpi=120)
+    fig.savefig(out("visa_examples.png"), dpi=120)
     plt.close(fig)
 
 
@@ -240,7 +264,7 @@ def main():
         npz2 = RES / "visa_vitb_blocks2_examples.npz"
         if npz2.exists():
             examples(R, ex, np.load(npz2), split)
-    print("figures in", FIG)
+    print("figures in", FIG, "| language:", mf.LANG)
 
 
 if __name__ == "__main__":

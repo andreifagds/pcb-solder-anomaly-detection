@@ -5,6 +5,7 @@
   visa_qualitative.png   hits, misses and false alarms with ViT-B block 2 at threshold x 1.15
 
     python scripts/make_visa_photo_figures.py --visa data/visa/VisA --split data/visa/1cls.csv
+    FIG_LANG=pt python scripts/make_visa_photo_figures.py ...   # Portuguese versions, *_pt.png
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from pcbad.visualize import heatmap, outline  # noqa: E402
 
 plt = mf.plt
 FIG = mf.FIG
+T, N, out = mf.T, mf.N, mf.out
 B2 = "dinov2_vitb14@blocks.2"
 
 
@@ -92,30 +94,34 @@ def main():
     r, col = divmod(pos, k)
     cv2.rectangle(mos_view, (col * t, r * t), (col * t + t, r * t + t), (255, 255, 255), 2)
     fig, axes = plt.subplots(1, 3, figsize=(11, 4.0))
-    show(axes[0], mos_img, "16 boards in one image (defective one boxed)")
-    show(axes[1], mos_view, f"heat map, score {sm[0] / (mm.threshold * 1.15):.2f}× the limit")
+    show(axes[0], mos_img, T("16 boards in one image (defective one boxed)", "16 placas numa imagem (a com defeito marcada)"))
+    show(axes[1], mos_view, T(f"heat map, score {sm[0] / (mm.threshold * 1.15):.2f}× the limit",
+           f"mapa de calor, nota {N(sm[0] / (mm.threshold * 1.15), '.2f')}× o limite"))
     show(axes[2], heatmap(board, maps2[i], vmax=hi2, vmin=lo2),
-         f"the same board alone, score {s2[i] / lim2:.2f}× the limit")
-    fig.suptitle("Attempt 1 on a public board: the defect disappears when the board is a small part of the image",
+         T(f"the same board alone, score {s2[i] / lim2:.2f}× the limit",
+           f"a mesma placa sozinha, nota {N(s2[i] / lim2, '.2f')}× o limite"))
+    fig.suptitle(T("Attempt 1 on a public board: the defect disappears when the board is a small part of the image",
+                   "Tentativa 1 numa placa pública: o defeito some quando a placa é uma parte pequena da imagem"),
                  x=0.01, ha="left", fontsize=11.5, fontweight="bold", color=mf.INK)
     fig.tight_layout()
-    fig.savefig(FIG / "visa_attempt1.png", dpi=130)
+    fig.savefig(out("visa_attempt1.png"), dpi=130)
     plt.close(fig)
     BackbonePool.clear()
 
     # ---- Figure: backbones on the same defective board
-    panels = [(board, "input"), (np.where(gt[..., None] > 0, 255, board).astype(np.uint8), "ground truth (white)")]
-    for key, name in [("wide_resnet50", "WideResNet-50"), ("dinov2_vitb14", "ViT-B block 8 (production)"),
-                      (B2, "ViT-B block 2")]:
+    panels = [(board, T("input", "entrada")),
+              (np.where(gt[..., None] > 0, 255, board).astype(np.uint8), T("ground truth (white)", "gabarito (branco)"))]
+    for key, name in [("wide_resnet50", "WideResNet-50"), ("dinov2_vitb14", T("ViT-B block 8 (production)", "ViT-B bloco 8 (produção)")),
+                      (B2, T("ViT-B block 2", "ViT-B bloco 2"))]:
         mk, sk, mapsk = scored(key, train, test)
         lok, hik = scale(mk, mapsk[y == 0])
-        panels.append((heatmap(board, mapsk[i], vmax=hik, vmin=lok), f"{name}\n{sk[i] / (mk.threshold * 1.15):.2f}× the limit"))
+        panels.append((heatmap(board, mapsk[i], vmax=hik, vmin=lok), f"{name}\n{N(sk[i] / (mk.threshold * 1.15), '.2f')}× " + T("the limit", "o limite")))
         BackbonePool.clear()
     fig, axes = plt.subplots(1, 5, figsize=(13, 3.3))
     for ax, (img, title) in zip(axes, panels):
         show(ax, img, title)
     fig.tight_layout()
-    fig.savefig(FIG / "visa_backbones_maps.png", dpi=130)
+    fig.savefig(out("visa_backbones_maps.png"), dpi=130)
     plt.close(fig)
 
     # ---- Figure: qualitative grid over the four categories with block 2
@@ -134,10 +140,12 @@ def main():
             if len(idx):
                 j = int(idx[np.argsort(sc[idx])[len(idx) // 2]])
                 img = outline(te[j], mapsc[j], min_level=hi) if name != "missed" else heatmap(te[j], mapsc[j], vmax=hi, vmin=lo)
-                rows[name].append((img, f"{cat}, {sc[j] / lim:.2f}×"))
+                rows[name].append((img, f"{cat}, {N(sc[j] / lim, '.2f')}×"))
         BackbonePool.clear()
     used = {k: v for k, v in rows.items() if v}
     fig, axes = plt.subplots(len(used), 4, figsize=(11, 2.9 * len(used)), squeeze=False)
+    ROWNAME = {"caught": T("caught", "detectou"), "missed": T("missed", "deixou passar"),
+               "false alarm": T("false alarm", "alarme falso")}
     color = {"caught": mf.GOOD, "missed": mf.CRIT, "false alarm": mf.WARN}
     for r, (name, items_) in enumerate(used.items()):
         for cidx in range(4):
@@ -146,12 +154,12 @@ def main():
                 show(ax, items_[cidx][0], items_[cidx][1], color=color[name])
             else:
                 ax.axis("off")
-        axes[r, 0].set_ylabel(name, fontsize=11, color=mf.INK)
+        axes[r, 0].set_ylabel(ROWNAME[name], fontsize=11, color=mf.INK)
         axes[r, 0].yaxis.set_visible(True)
     fig.tight_layout()
-    fig.savefig(FIG / "visa_qualitative.png", dpi=120)
+    fig.savefig(out("visa_qualitative.png"), dpi=120)
     plt.close(fig)
-    print("figures in", FIG)
+    print("figures in", FIG, "| language:", mf.LANG)
 
 
 if __name__ == "__main__":

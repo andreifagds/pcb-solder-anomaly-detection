@@ -5,6 +5,7 @@ All photos here come from the production server (Board D), with the logo and pro
 | File | Used in | Status |
 |---|---|---|
 | `panel_overview.jpg` | Figure 1 | done |
+| `panel_overview_pt.jpg` | Figura 1 (README em português) | done |
 | `panel_rois.jpg` | Figure 2 | done |
 | `roi_mosaic.jpg` | Figure 3 | done |
 | `infer_output.jpg` | Figure 17 | done (a real inspection: job 1166) |

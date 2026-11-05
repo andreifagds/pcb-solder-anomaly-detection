@@ -1,4 +1,4 @@
-# Unsupervised solder-defect detection on PCBs with PatchCore and a shared backbone
+# Detecção não supervisionada de defeitos de solda em PCB com PatchCore e backbone compartilhado
 
 <p align="left">
   <img src="https://img.shields.io/badge/PUC--Rio-VC%20Master-1f4e79" alt="PUC-Rio VC Master">
@@ -17,37 +17,37 @@
 
 Trabalho apresentado ao curso [VC MASTER](https://ica.puc-rio.ai/vc-master) como pré-requisito para conclusão de curso e obtenção de crédito na disciplina "Projetos de Sistemas Inteligentes de Apoio à Decisão".
 
-- [Code](src/pcbad/)
-- [Versão em português deste README](README_pt.md)
-- Related work:
+- [Código](src/pcbad/)
+- [English version of this README](README_en.md)
+- Trabalhos relacionados:
   - [Towards Total Recall in Industrial Anomaly Detection (PatchCore)](https://arxiv.org/abs/2106.08265)
   - [AnomalyDINO: Boosting Patch-based Few-shot Anomaly Detection with DINOv2](https://arxiv.org/abs/2405.14529)
   - [DINOv2: Learning Robust Visual Features without Supervision](https://arxiv.org/abs/2304.07193)
   - [Anomalib: A Deep Learning Library for Anomaly Detection](https://arxiv.org/abs/2202.08341)
-  - [SPot-the-Difference (VisA dataset, includes 4 PCB categories)](https://arxiv.org/abs/2207.14315)
+  - [SPot-the-Difference (dataset VisA, com 4 categorias de PCB)](https://arxiv.org/abs/2207.14315)
   - [Divide and Conquer: High-Resolution Industrial Anomaly Detection via Memory Efficient Tiled Ensemble](https://arxiv.org/abs/2403.04932)
 
 ---
 
 <p align="center">
-  <b>[photo to add]</b> <code>assets/photos/hero.png</code><br>
-  <i>Good joint, the same joint with a short, the heat map and the outline drawn by the system.</i>
+  <b>[foto a adicionar]</b> <code>assets/photos/hero.png</code><br>
+  <i>Solda boa, a mesma solda com curto, o mapa de calor e o contorno que o sistema desenha.</i>
 </p>
 
-This project started from a very practical problem on the line where I work. At the end of the power-supply assembly, every panel carries more than 32 small boards and hundreds of solder joints, and somebody has to look at each one for shorts, missing solder or excess solder. I wanted a camera to do that.
+Esse projeto nasceu de um problema bem concreto da linha onde eu trabalho. No fim da montagem de fontes, cada painel tem mais de 32 plaquinhas, centenas de pontos de solda, e alguém precisa olhar um por um procurando curto, falta de solda ou excesso. Eu queria que uma câmera fizesse isso.
 
-Getting there was a lot less straightforward than I expected. I went through three designs that did not work before the one in this repository, and this README tells the story in the order it happened. In the end every region of the panel has its own model (110 to 120 per board, and it once was 132), all of them learned from good boards only, and all of them share one DINOv2 loaded once on the GPU. That last detail is what made the whole panel fit on a 6 GB laptop GPU.
+O caminho até funcionar foi bem menos direto do que eu imaginava. Tentei três jeitos que não deram certo antes de chegar no que está aqui, e este README conta essa história na ordem em que ela aconteceu. No final, cada região do painel tem o seu próprio modelo (de 110 a 120 por placa, e já foram 132), todos eles aprenderam só com placa boa, e todos dividem um único DINOv2 carregado uma vez na GPU. Foi esse último detalhe que fez o painel inteiro caber numa GPU de notebook de 6 GB.
 
-| ROI models loaded | VRAM, one full model per ROI | VRAM, shared backbone | Score difference vs. anomalib | One ROI model on disk |
+| Modelos de ROI carregados | VRAM com um modelo completo por ROI | VRAM com o backbone compartilhado | Diferença de nota para o anomalib | Um modelo de ROI em disco |
 |:---:|:---:|:---:|:---:|:---:|
-| 130 | 35.0 GB (does not fit) | 3.5 GB | 0.001% | 25 MB (was 275 MB) |
+| 130 | 35,0 GB (não cabe) | 3,5 GB | 0,001% | 25 MB (eram 275 MB) |
 
 <p align="center">
-  <img src="assets/figures/journey.png" width="100%"><br>
-  <i>The four versions the project went through, in order. Section 2.3 tells each one.</i>
+  <img src="assets/figures/journey_pt.png" width="100%"><br>
+  <i>As quatro versões pelas quais o projeto passou, na ordem. A seção 2.3 conta cada uma.</i>
 </p>
 
-If you have five minutes, read the abstract, look at the figure above, the animation at the start of Attempt 4 and the table at the top of Section 3. If you have twenty, Sections 2.3 and 3.5 are the interesting parts.
+Se você tem cinco minutos, leia o resumo, olhe a figura acima, a animação no começo da tentativa 4 e a tabela do começo da seção 3. Se tem vinte, a seção 2.3 e a 3.5 são as partes mais interessantes.
 
 ---
 
@@ -61,567 +61,567 @@ Checking solder joints by eye is tiring work, and attention drops during a shift
 
 ---
 
-## Table of contents
+## Sumário
 
-1. [Introduction](#1-introduction) · [related work](#14-related-work)
-2. [Modeling](#2-modeling)
-   - [2.1 Data](#21-data)
-   - [2.2 How PatchCore works](#22-how-patchcore-works)
-   - [2.3 Four attempts](#23-four-attempts)
-   - [2.4 Final architecture](#24-final-architecture)
-   - [2.5 Parameters and why I picked them](#25-parameters-and-why-i-picked-them)
-   - [2.6 A threshold without defective samples](#26-a-threshold-without-defective-samples)
-3. [Results](#3-results)
-4. [Conclusions](#4-conclusions)
-5. [FAQ](#5-faq)
-6. [How to run](#6-how-to-run)
-7. [Repository structure](#7-repository-structure)
-8. [References](#8-references)
+1. [Introdução](#1-introdução) · [trabalhos relacionados](#14-trabalhos-relacionados)
+2. [Modelagem](#2-modelagem)
+   - [2.1 Dados](#21-dados)
+   - [2.2 Como o PatchCore funciona](#22-como-o-patchcore-funciona)
+   - [2.3 Quatro tentativas](#23-quatro-tentativas)
+   - [2.4 Arquitetura final](#24-arquitetura-final)
+   - [2.5 Parâmetros e por que escolhi cada um](#25-parâmetros-e-por-que-escolhi-cada-um)
+   - [2.6 Limiar sem nenhuma amostra com defeito](#26-limiar-sem-nenhuma-amostra-com-defeito)
+3. [Resultados](#3-resultados)
+4. [Conclusões](#4-conclusões)
+5. [Perguntas frequentes](#5-perguntas-frequentes)
+6. [Como executar](#6-como-executar)
+7. [Estrutura do repositório](#7-estrutura-do-repositório)
+8. [Referências](#8-referências)
 
 ---
 
-## 1. Introduction
+## 1. Introdução
 
-### 1.1 The problem
+### 1.1 O problema
 
-The boards come out of wave soldering held together in a **panel**, one big board with more than 32 small power supplies. Before the panel is cut, someone checks hundreds of solder joints looking for three kinds of defect:
+As placas saem da solda por onda presas num **painel**, uma placa grande com mais de 32 fontes pequenas. Antes de separar tudo, alguém confere centenas de pontos de solda atrás de três tipos de defeito:
 
-| Defect | What it looks like |
+| Defeito | Como aparece |
 |---|---|
-| Short (bridge) | solder joining two pins that should be separate |
-| Missing solder | a pin with no solder around it, with the copper ring showing |
-| Excess solder / solder ball | a blob on the joint, or a loose ball of solder next to it |
+| Curto (ponte) | solda ligando dois terminais que deviam estar separados |
+| Falta de solda | terminal sem solda em volta, com o anel de cobre aparecendo |
+| Excesso de solda / bolinha | um acúmulo em cima do ponto, ou uma bolinha de solda solta perto dele |
 
-It doesn't sound like much, but a 1 mm bridge is enough to fail the board at final test or, worse, in the customer's hands. And looking for it panel after panel, a whole shift long, wears anyone out.
+Parece pouco, mas uma ponte de 1 mm já basta para a placa reprovar no teste final ou, pior, dar problema na mão do cliente. E procurar isso painel atrás de painel, o turno inteiro, cansa qualquer um.
 
 <p align="center">
-  <img src="assets/photos/panel_overview.jpg" width="100%"><br>
-  <i>Figure 1. A panel of Board D as the camera sees it (28 power supplies, 5120 × 5120 px) and a zoom on one region of interest. The blurred blocks are the logo and the product code, which cannot appear.</i>
+  <img src="assets/photos/panel_overview_pt.jpg" width="100%"><br>
+  <i>Figura 1. Um painel da Placa D como a câmera vê (28 fontes, 5120 × 5120 px) e o zoom em uma região de interesse. Os blocos borrados são o logo e o código do produto, que não podem aparecer.</i>
 </p>
 
-### 1.2 Why unsupervised
+### 1.2 Por que não supervisionado
 
-The first question everybody asks is: why not train a YOLO? Because a supervised detector needs a lot of labeled examples of every defect type, and on a line that already works well, defects are rare. There are thousands of good joints for each bad one, and the bad ones are never the same. I would spend months collecting a decent dataset, and the next new defect would still be missing from it.
+A primeira pergunta que todo mundo faz é: por que não treinar um YOLO? Porque um detector supervisionado precisa de muito exemplo rotulado de cada tipo de defeito, e defeito, numa linha que já funciona bem, é raro. Tem milhares de soldas boas para cada ruim, e as ruins nunca são iguais. Eu levaria meses juntando um dataset decente, e o próximo defeito diferente continuaria de fora.
 
-Anomaly detection turns the problem inside out. Instead of teaching the model what a defect looks like, I teach it what a good joint looks like, and it flags whatever does not match. Good parts are the one thing I have plenty of: the line makes them all day. I picked PatchCore [1] because it is the reference method on industrial benchmarks, it is simple to train (none of that long neural-network training over many epochs) and it gives back a heat map showing where the problem is.
+A detecção de anomalias vira o problema do avesso. Em vez de ensinar o que é defeito, eu ensino como é uma solda boa, e o modelo marca o que não se parece com ela. Peça boa é o que mais tem: a linha produz o dia inteiro. Escolhi o PatchCore [1] porque ele é a referência nos benchmarks industriais, é simples de treinar (não tem aquele treino longo de rede neural, com várias épocas) e ainda devolve um mapa de calor mostrando onde está o problema.
 
-### 1.3 Goal and contributions
+### 1.3 Objetivo e contribuições
 
-What I wanted was a system that finds solder defects on real panels, runs on a modest GPU and can be retrained with photos of good parts only.
+O que eu queria era um sistema que achasse defeito de solda em painel de verdade, rodasse numa GPU modesta e pudesse ser retreinado só com foto de peça boa.
 
-Along the way the work ended up bringing four things:
+No caminho, o trabalho acabou trazendo quatro coisas:
 
-1. A pipeline with PatchCore and one model per ROI for solder inspection, together with the failed attempts that show why each region needs its own model.
-2. One backbone shared by every ROI model. Instead of each model carrying its own copy of the network, they all use the same one, and each keeps only its own part (the memory bank). Scores stay the same and VRAM drops by about 90% with DINOv2 ViT-B.
-3. Much smaller model files: each ROI model on disk went from 275 MB to 25 MB, and it loads in 18 ms.
-4. A way of choosing the rejection threshold using only photos of good parts, without any defective sample.
+1. Um pipeline com o PatchCore e um modelo por ROI para inspeção de solda, junto com as tentativas que falharam e que mostram por que cada região precisa do seu próprio modelo.
+2. Um backbone compartilhado por todos os modelos de ROI. Em vez de cada modelo carregar a sua cópia da rede, todos usam a mesma, e cada um guarda só a sua parte própria (o banco de memória). A nota continua a mesma e a VRAM cai uns 90% com o DINOv2 ViT-B.
+3. Arquivos de modelo bem menores: cada modelo de ROI em disco passou de 275 MB para 25 MB e carrega em 18 ms.
+4. Um jeito de escolher o limiar de reprovação usando só fotos de peça boa, sem precisar de nenhuma amostra com defeito.
 
-### 1.4 Related work
+### 1.4 Trabalhos relacionados
 
-PaDiM [9] and PatchCore [1] are two of the best-known methods for this kind of anomaly detection on industrial images. PatchCore keeps a "memory bank" with small pieces of the good images and compares each new image against it, and it became the reference on MVTec AD [7] and VisA [6], the two most used public datasets in this area.
+O PaDiM [9] e o PatchCore [1] são dois dos métodos mais conhecidos para esse tipo de detecção de anomalias em imagem industrial. O PatchCore guarda um "banco de memória" com pedacinhos das imagens boas e compara cada imagem nova com ele, e virou a referência no MVTec AD [7] e no VisA [6], os dois datasets públicos mais usados nessa área.
 
-AnomalyDINO [2] showed that DINOv2 [3], a network from Meta trained without labels, works very well for this kind of comparison, even with few good images. Reading that paper is what made me try DINOv2.
+O AnomalyDINO [2] mostrou que o DINOv2 [3], uma rede da Meta treinada sem rótulos, funciona muito bem nesse tipo de comparação, mesmo com poucas imagens boas. Foi lendo esse artigo que resolvi testar o DINOv2.
 
-The closest work to mine that I found is Rolih et al. [10]. They split high-resolution images into pieces and train one model per piece, which is the same idea as one model per ROI. In their case one model runs at a time. In mine I needed all 130 models loaded together to inspect the panel without waiting, and memory went down because I shared the only part that is identical in all of them: the backbone.
+O trabalho mais parecido com o meu que encontrei é o de Rolih et al. [10]. Eles dividem imagens de alta resolução em pedaços e treinam um modelo para cada pedaço, que é a mesma ideia de um modelo por ROI. No caso deles, um modelo roda de cada vez. No meu, eu precisava dos 130 modelos carregados ao mesmo tempo para inspecionar o painel sem esperar, e a memória caiu porque compartilhei a única parte que é igual em todos: o backbone.
 
-Everything is built on anomalib [5], Intel's library for anomaly detection, and the part that computes the PatchCore score is anomalib's own, unchanged.
+Tudo foi feito em cima do anomalib [5], a biblioteca da Intel para detecção de anomalias, e a parte que calcula a nota do PatchCore é a do próprio anomalib, sem alteração.
 
 ---
 
-## 2. Modeling
+## 2. Modelagem
 
-### 2.1 Data
+### 2.1 Dados
 
-| Item | Value |
+| Item | Valor |
 |---|---|
-| Camera | 26 MP industrial camera, 5120 × 5120 px, fixed over the jig |
-| Resolution on the board | about 22 px per millimetre |
-| ROI size | 512 × 512 px, about 23 × 23 mm: one group of joints plus a bit of context |
-| ROIs per panel | 110 to 120 today (132 in an earlier version) |
-| Good training photos | 38 to 224 panels, depending on the board |
-| Boards | 4 power-supply models, which I call Board A, B, C and D here (the photos in this README are from Board D) |
+| Câmera | câmera industrial de 26 MP, 5120 × 5120 px, fixa em cima da jiga |
+| Resolução na placa | uns 22 px por milímetro |
+| Tamanho da ROI | 512 × 512 px, uns 23 × 23 mm: um grupo de soldas e um pouco do entorno |
+| ROIs por painel | de 110 a 120 hoje (já foram 132 numa versão anterior) |
+| Fotos boas de treino | de 38 a 224 painéis, dependendo da placa |
+| Placas | 4 modelos de fonte, que chamo aqui de Placa A, B, C e D (as fotos deste README são da Placa D) |
 
-Camera, jig and lighting are fixed, so each ROI always shows the same joints from the same angle. Even so, the panel moves a little between one photo and the next (4 to 16 pixels), and that is already enough to cause trouble. That is why each photo is aligned to a reference photo before the ROIs are cropped.
+Câmera, jiga e iluminação são fixas, então cada ROI mostra sempre as mesmas soldas do mesmo ângulo. Mesmo assim o painel se mexe um pouquinho entre uma foto e outra (de 4 a 16 pixels), e isso já é suficiente para atrapalhar. Por isso cada foto é alinhada com uma foto de referência antes de recortar as ROIs.
 
-The production photos cannot be published. To have results anyone can reproduce, I also used the four PCB categories of VisA [6], a public dataset, in Section [3.5](#35-public-pcbs-visa).
+As fotos de produção não podem ser publicadas. Para ter resultado que qualquer pessoa consiga reproduzir, usei também as quatro categorias de PCB do VisA [6], um dataset público, na seção [3.5](#35-pcbs-públicas-visa).
 
 <p align="center">
   <img src="assets/photos/panel_rois.jpg" width="100%"><br>
-  <i>Figure 2. The 120 ROIs of Board D, each one with its own model. They overlap a little on purpose, so that no joint is cut at the border between two ROIs.</i>
+  <i>Figura 2. As 120 ROIs da Placa D, cada uma com o seu próprio modelo. Elas se sobrepõem um pouco de propósito, para nenhuma solda ficar cortada na divisa entre duas ROIs.</i>
 </p>
 
 <p align="center">
   <img src="assets/photos/roi_mosaic.jpg" width="100%"><br>
-  <i>Figure 3. Eight real ROIs of Board D. Even though the boards are identical, each region has different joints, components and text, and that is what each model learns as "normal".</i>
+  <i>Figura 3. Oito ROIs reais da Placa D. Mesmo sendo placas iguais, cada região tem soldas, componentes e textos diferentes, e é isso que cada modelo aprende como "normal".</i>
 </p>
 
-### 2.2 How PatchCore works
+### 2.2 Como o PatchCore funciona
 
-The easiest way I found to explain PatchCore is to think of a photo album of good solder, cut into little tiles.
+O jeito mais fácil que encontrei de explicar o PatchCore é pensar num álbum de fotos de solda boa, só que recortado em quadradinhos.
 
 ```mermaid
 flowchart LR
-    A[Good ROI photos<br/>~80 images] --> B[Backbone<br/>DINOv2]
-    B --> C[Each tile of the photo<br/>becomes a list of numbers]
-    C --> D[Keep only the ones<br/>most different from each other]
-    D --> E[(Memory bank<br/>of this ROI)]
-    F[New photo] --> B2[Same backbone] --> G[Tiles of the new photo]
-    G --> H{How far is it<br/>from the most similar<br/>one in the bank?}
+    A[Fotos boas da ROI<br/>~80 imagens] --> B[Backbone<br/>DINOv2]
+    B --> C[Cada quadradinho da foto<br/>vira uma lista de números]
+    C --> D[Guarda só os mais<br/>diferentes entre si]
+    D --> E[(Banco de memória<br/>desta ROI)]
+    F[Foto nova] --> B2[Mesmo backbone] --> G[Quadradinhos da foto nova]
+    G --> H{Quão longe está<br/>do mais parecido<br/>no banco?}
     E --> H
-    H --> I[Heat map]
-    H --> J[Image score]
+    H --> I[Mapa de calor]
+    H --> J[Nota da imagem]
 ```
 
-A network already trained on millions of images, the backbone, looks at each tile of the ROI and returns a list of numbers that describes that piece (texture, shape, brightness). The network is never trained again here; I only use it as a pair of eyes.
+Uma rede já treinada em milhões de imagens, o backbone, olha cada quadradinho da ROI e devolve uma lista de números que descreve aquele pedaço (textura, forma, brilho). Essa rede não é treinada de novo em momento nenhum; eu só uso ela como "olhos".
 
-The lists from every tile of every good photo go into one place. Since most of them are practically the same (same joint, same light), PatchCore keeps only part of them, choosing the ones that are most different from each other. That is the so-called coreset. What is left is the memory bank of that ROI.
+As listas de todos os quadradinhos de todas as fotos boas vão para um mesmo lugar. Como a maioria é praticamente igual (mesma solda, mesma luz), o PatchCore guarda só uma parte delas, escolhendo as mais diferentes entre si. Isso é o tal do coreset. O que sobra é o banco de memória daquela ROI.
 
-At inspection time, each tile of the new photo looks for the most similar one in the bank. If even the most similar is far away, the model has never seen anything like it. Those distances make the heat map, and the strangest tile sets the score of the image.
+Na hora de inspecionar, cada quadradinho da foto nova procura o mais parecido no banco. Se até o mais parecido está longe, é porque o modelo nunca viu nada assim. Essas distâncias formam o mapa de calor, e o quadradinho mais estranho define a nota da imagem.
 
-So "training" is just running the good photos through the network once and building the bank. It takes seconds per ROI.
+No fim das contas, "treinar" é só passar as fotos boas pela rede uma vez e montar o banco. Leva segundos por ROI.
 
-### 2.3 Four attempts
+### 2.3 Quatro tentativas
 
-This is the part I like telling the most, because every thing that went wrong left a decision that stayed in the project.
+Essa é a parte que eu mais gosto de contar, porque cada coisa que deu errado deixou uma decisão que ficou no projeto.
 
 <details>
-<summary><b>Project timeline</b> (from the history of the production system: 119 commits, March to October 2026)</summary>
+<summary><b>Linha do tempo do projeto</b> (pelo histórico do sistema de produção: 119 commits, de março a outubro de 2026)</summary>
 
-| When | What happened |
+| Quando | O que aconteceu |
 |---|---|
-| Mar 2026 | First prototype: training, ROI-size suggestion and multi-camera capture; I recorded the demo video |
-| Apr 2026 | Running on the line server, plus a YOLO mode for other stations (out of scope here) |
-| Jul 2026 | Project accepted as the VC MASTER final project |
-| Sep 2026 | Tuning of the memory-bank size, VRAM measurement of the shared backbone and a suggestion sent to anomalib (64 commits that month) |
-| Oct 2026 | Switched to DINOv2 after a side-by-side test on real panels; lean model files applied to the 110 production models, 4 968 MB down to 742 MB |
-| Nov 2026 | This repository: clean version of the code, laptop measurements, VisA experiments |
+| mar/2026 | Primeiro protótipo: treino, sugestão de tamanho de ROI e captura com várias câmeras; gravei o vídeo de demonstração |
+| abr/2026 | Sistema rodando no servidor da linha, mais um modo YOLO para outras estações (fora do escopo aqui) |
+| jul/2026 | Projeto aceito como TCC do VC MASTER |
+| set/2026 | Ajuste do tamanho do banco de memória, medição de VRAM do backbone compartilhado e uma sugestão enviada para o anomalib (64 commits no mês) |
+| out/2026 | Troca para o DINOv2 depois do teste lado a lado em painel real; arquivos de modelo enxutos aplicados nos 110 modelos de produção, de 4 968 MB para 742 MB |
+| nov/2026 | Este repositório: versão limpa do código, medições no notebook e experimentos no VisA |
 </details>
 
-#### Attempt 1: one model for the whole panel
+#### Tentativa 1: um modelo para o painel inteiro
 
-The first idea was the obvious one: take the photo of the whole panel and hand it to PatchCore.
+A primeira ideia foi a mais óbvia: pegar a foto do painel inteiro e entregar para o PatchCore.
 
-The catch is that the network works with 518 × 518 px images, so the 5120 × 5120 photo shrinks about 10 times on the way in. Each tile the network looks at ends up covering almost 6 mm of board. A 1 mm short becomes a small fraction of a tile, and its signal disappears among the good copper around it. The model simply had no way to see it.
-
-<p align="center">
-  <img src="assets/figures/visa_attempt1.png" width="100%"><br>
-  <i>Figure 4. The same thing reproduced on a public VisA board. Left: the defective board hidden among 16 good boards. Middle: the heat map of that "panel", where the defect barely shows. Right: the same board alone, where the defect is the hottest spot.</i>
-</p>
-
-The lesson was that the limit was resolution, and the way out was to zoom in: crop regions of interest.
-
-#### Attempt 2: ROIs, but one model for all of them
-
-With the ROIs drawn, I thought: what if I put every crop into one memory bank? One model instead of 130 would be much cheaper.
-
-It didn't work, and for a reason I only understood after looking at the boards carefully. On these panels, some shorts and some missing joints are **intentional**. Certain pins are bridged on purpose by design, and some pads stay empty because they belong to a variant that is not assembled. With one bank, "normal" becomes anything any ROI has:
-
-```
-ROI 7   intentional short  → goes into the bank as normal
-ROI 12  accidental short   → the most similar thing in the bank is the short from ROI 7
-                           → looks normal → approved
-```
-
-PatchCore knows nothing about position. If something is normal in one place, it becomes normal everywhere. I went to check it in the numbers, and the banks of two different ROIs came out twice as far apart from each other as the photos of the same ROI. They really are different normals.
+Só que a rede trabalha com imagens de 518 × 518 px, então a foto de 5120 × 5120 encolhe umas 10 vezes antes de entrar. Cada quadradinho que a rede analisa passa a cobrir quase 6 mm de placa. Um curto de 1 mm vira uma fração pequena de um quadradinho, e o sinal dele some no meio do cobre bom em volta. O modelo simplesmente não tinha como ver.
 
 <p align="center">
-  <b>[photo to add]</b> <code>assets/photos/attempt2_intentional_short.png</code><br>
-  <i>Figure 5. Left: a ROI where the bridge is intentional. Right: a ROI where the same bridge is a defect. One shared model cannot tell them apart.</i>
+  <img src="assets/figures/visa_attempt1_pt.png" width="100%"><br>
+  <i>Figura 4. A mesma coisa reproduzida numa placa pública do VisA. À esquerda, a placa com defeito escondida no meio de 16 placas boas; no centro, o mapa de calor desse "painel", em que o defeito quase não aparece; à direita, a mesma placa sozinha, em que o defeito é o ponto mais quente.</i>
 </p>
 
-That gave me the second lesson: each ROI needs its own model.
+A lição foi que o limite era resolução, e a saída foi dar zoom: recortar regiões de interesse.
 
-#### Attempt 3: one model per ROI
+#### Tentativa 2: ROIs, mas um modelo só para todas
 
-With one model per ROI, detection was good. The problem became memory. Each anomalib model comes with two parts, the backbone and the memory bank, and the heavy one is the backbone:
+Com as ROIs desenhadas, pensei: e se eu jogar todos os recortes num banco de memória só? Um modelo em vez de 130 seria bem mais barato.
 
-| Part of the model (DINOv2 ViT-B, 80 training photos) | Size in VRAM |
+Não funcionou, e por um motivo que eu só entendi olhando as placas com calma. Nesses painéis, alguns curtos e algumas faltas de solda são **propositais**. Certos terminais são ligados de propósito no projeto, e alguns pads ficam vazios porque são de uma variante que não é montada. Com um banco só, "normal" passa a ser tudo que qualquer ROI tem:
+
+```
+ROI 7   curto proposital  → entra no banco como normal
+ROI 12  curto acidental   → o mais parecido no banco é o curto da ROI 7
+                          → parece normal → aprova
+```
+
+O PatchCore não sabe nada de posição. Se uma coisa é normal num lugar, ela vira normal em todo lugar. Fui conferir nos números e os bancos de duas ROIs diferentes ficaram duas vezes mais distantes entre si do que as fotos de uma mesma ROI. São "normais" diferentes de verdade.
+
+<p align="center">
+  <b>[foto a adicionar]</b> <code>assets/photos/attempt2_intentional_short.png</code><br>
+  <i>Figura 5. À esquerda, uma ROI em que a ponte é proposital. À direita, uma ROI em que a mesma ponte é defeito. Um modelo único não tem como separar as duas.</i>
+</p>
+
+Daí veio a segunda lição: cada ROI precisa do seu próprio modelo.
+
+#### Tentativa 3: um modelo por ROI
+
+Com um modelo por ROI a detecção ficou boa. O problema passou a ser memória. Cada modelo do anomalib vem com duas partes, o backbone e o banco de memória, e quem pesa é o backbone:
+
+| Parte do modelo (DINOv2 ViT-B, 80 fotos de treino) | Tamanho na VRAM |
 |---|---|
 | Backbone | 250 MB |
-| Memory bank | 25 MB |
+| Banco de memória | 25 MB |
 
-130 ROIs means 130 copies of the same network, about 35 GB, on a 6 GB GPU. No way.
-
-<p align="center">
-  <img src="assets/figures/vram_vs_rois.png" width="100%"><br>
-  <i>Figure 6. VRAM in use as ROI models are loaded. Orange: one full model per ROI (dashed where it no longer fits and the value is estimated). Blue: shared backbone. Measured on an RTX 1000 Ada Laptop GPU, 6 GB.</i>
-</p>
-
-#### Attempt 4: one shared backbone, one bank per ROI
+Com 130 ROIs são 130 cópias da mesma rede, uns 35 GB, numa GPU de 6 GB. Não tinha como.
 
 <p align="center">
-  <img src="assets/figures/vram_animation.gif" width="75%"><br>
-  <i>The 130 ROI models of a panel being loaded one by one on a 6 GB GPU.</i>
+  <img src="assets/figures/vram_vs_rois_pt.png" width="100%"><br>
+  <i>Figura 6. VRAM ocupada conforme os modelos de ROI vão sendo carregados. Laranja: um modelo completo por ROI (tracejado onde não cabe mais e o valor é estimado). Azul: backbone compartilhado. Medido numa RTX 1000 Ada Laptop GPU de 6 GB.</i>
 </p>
 
-It clicked when I went to look at how anomalib "trains" PatchCore. The backbone is never adjusted: it comes ready and is only used to look at the photos. In other words, those 130 copies were exactly the same, and the only thing that differed from one ROI model to the next was the memory bank.
-
-Before changing anything, I checked it on the production system. I took two models trained on different photos: the banks were different, so were the thresholds, and the backbone weights in the two files were identical. In this repository [`scripts/check_equivalence.py`](scripts/check_equivalence.py) runs the same check (Section 3.1).
-
-So I started loading the backbone only once, and every ROI model uses that same copy. The math is simple: with one full model per ROI, memory is 130 copies of the backbone plus 130 banks; with sharing, it is one copy of the backbone plus the 130 banks. The bigger the backbone compared to a bank, the more you save.
+#### Tentativa 4: um backbone compartilhado e um banco por ROI
 
 <p align="center">
-  <img src="assets/figures/saving_curve.png" width="85%"><br>
-  <i>Figure 7. How much VRAM sharing saves, as the number of ROI models grows. Lines: what the sizes predict. Dots: measured.</i>
+  <img src="assets/figures/vram_animation_pt.gif" width="75%"><br>
+  <i>Os 130 modelos de ROI de um painel sendo carregados um a um numa GPU de 6 GB.</i>
 </p>
 
-With DINOv2 ViT-B the saving gets close to 90%. With WideResNet-50, which is much smaller, it stays around 44%. That also explains why, in the older versions of the system that still used WideResNet, I had only measured a 50 to 70% saving.
+A ficha caiu quando fui olhar como o anomalib "treina" o PatchCore. O backbone nunca é ajustado: ele já vem pronto e só é usado para olhar as fotos. Ou seja, aquelas 130 cópias eram exatamente iguais, e a única coisa diferente de um modelo de ROI para outro era o banco de memória.
 
-#### What else it took to work on the line
+Antes de mudar qualquer coisa, conferi no sistema de produção. Peguei dois modelos treinados com fotos diferentes: os bancos eram diferentes, os limiares também, e os pesos do backbone nos dois arquivos eram idênticos. Neste repositório o [`scripts/check_equivalence.py`](scripts/check_equivalence.py) faz a mesma conferência (seção 3.1).
 
-Sharing the backbone solved memory, but running it on the real line needed a few more changes:
+Então passei a carregar o backbone uma vez só, e todos os modelos de ROI usam o mesmo. A conta fica simples: com um modelo completo por ROI, a memória é 130 cópias do backbone mais 130 bancos; compartilhando, é uma cópia do backbone mais os 130 bancos. Quanto maior o backbone em relação ao banco, mais se economiza.
 
-| Change | The problem | What changed |
+<p align="center">
+  <img src="assets/figures/saving_curve_pt.png" width="85%"><br>
+  <i>Figura 7. Quanto de VRAM o compartilhamento economiza, conforme o número de modelos de ROI. Linhas: o esperado pelos tamanhos. Pontos: medido.</i>
+</p>
+
+Com o DINOv2 ViT-B a economia chega perto de 90%. Com a WideResNet-50, que é bem menor, fica em uns 44%. Isso também explica por que, nas versões antigas do sistema, ainda com WideResNet, eu só tinha medido de 50 a 70% de economia.
+
+#### O que mais precisou para funcionar na linha
+
+Compartilhar o backbone resolveu a memória, mas colocar isso para rodar na linha de verdade pediu mais alguns ajustes:
+
+| Mudança | O problema | O que mudou |
 |---|---|---|
-| Aligning the panel photo with a reference before cropping | the panel moves a few pixels between photos, and good ROIs were getting rejected | on 4 test ROIs, 3 false alarms went away and the defects were still rejected |
-| Saving only the memory bank in the model file | anomalib saves the whole backbone inside every file; when I switched to DINO, the 110 models filled up the server's disk | each file went down to about 7 MB, and the 110 models went from 4 968 MB to 742 MB, with the same scores |
-| Not building the backbone again when loading each model | anomalib built a whole backbone per model and then threw it away | loading each model went from 1 s to 0.03 s |
-| Smoothing the heat map a faster way | that step was slow on the GPU | from 68 ms to 0.55 ms per ROI |
-| Turning on a speed optimization of DINO | anomalib leaves it off by default | from 106 ms to 91 ms per ROI, same scores |
+| Alinhar a foto do painel com uma referência antes de recortar | o painel anda alguns pixels entre fotos, e ROIs boas chegavam a reprovar | em 4 ROIs de teste, 3 falsos defeitos sumiram e os defeitos continuaram reprovando |
+| Salvar só o banco de memória no arquivo do modelo | o anomalib salva o backbone inteiro dentro de cada arquivo; quando troquei para o DINO, os 110 modelos encheram o disco do servidor | cada arquivo caiu para uns 7 MB, e os 110 modelos foram de 4 968 MB para 742 MB, com a mesma nota |
+| Não montar o backbone de novo ao carregar cada modelo | o anomalib montava um backbone inteiro por modelo e depois jogava fora | a carga de cada modelo foi de 1 s para 0,03 s |
+| Suavizar o mapa de calor de um jeito mais rápido | essa etapa estava lenta na GPU | de 68 ms para 0,55 ms por ROI |
+| Ligar uma otimização de velocidade do DINO | o anomalib deixa ela desligada por padrão | de 106 ms para 91 ms por ROI, com as mesmas notas |
 
-The heat-map smoothing even led to a conversation with the anomalib team: I opened [issue #3780](https://github.com/open-edge-platform/anomalib/issues/3780) suggesting the change. The maintainer asked for more tests and, on the newer PyTorch version they use today, the original step was already fast. I withdrew the suggestion. The gain is real here, where I use PyTorch 2.5.1, but not on recent versions.
+A suavização do mapa rendeu até uma conversa com o pessoal do anomalib: abri a [issue #3780](https://github.com/open-edge-platform/anomalib/issues/3780) sugerindo a mudança. O mantenedor pediu mais testes e, na versão mais nova do PyTorch que eles usam hoje, a etapa original já estava rápida. Retirei a sugestão. O ganho existe aqui, que uso o PyTorch 2.5.1, mas não vale para as versões mais recentes.
 
-#### Traps I found along the way
+#### Armadilhas que encontrei no caminho
 
-Sharing a backbone looks like a simple change. It wasn't. And the worst part is that the problems below show no error on screen; you only notice them by measuring:
+Compartilhar um backbone parece uma mudança simples. Não foi. E o pior é que os problemas abaixo não dão erro nenhum na tela, você só percebe medindo:
 
-- The way anomalib's own documentation suggests to reuse a backbone ends up keeping a hidden copy of it inside every model, about 265 MB extra per model. In practice nothing was being shared. I solved it by building the ROI model without a backbone and handing it the shared one only when it is used.
-- The order of the layers in the config file matters. If it is reversed, anomalib swaps the labels under the hood and nothing warns you.
-- anomalib's default holds out 20% of the good photos at random for validation. Those photos never get into the bank, and the threshold comes from about 5 random photos, changing with every training. I replaced it with another way of computing the threshold, described in Section 2.6.
+- O jeito que a própria documentação do anomalib sugere para reaproveitar um backbone acaba guardando uma cópia escondida dele dentro de cada modelo, uns 265 MB a mais por modelo. Na prática, nada era compartilhado. Resolvi montando o modelo de ROI sem backbone e entregando o compartilhado só na hora de usar.
+- A ordem das camadas no arquivo de configuração importa. Se ela estiver invertida, o anomalib troca os rótulos por baixo dos panos e nada avisa.
+- O padrão do anomalib separa 20% das fotos boas por sorteio para validação. Essas fotos nunca entram no banco, e o limiar sai de umas 5 fotos sorteadas, mudando a cada treino. Troquei por outro jeito de calcular o limiar, que conto na seção 2.6.
 
-### 2.4 Final architecture
+### 2.4 Arquitetura final
 
-Putting it all together, the system looks like this:
+Juntando tudo, o sistema ficou assim:
 
 ```mermaid
 flowchart TB
     subgraph GPU["GPU (6 GB)"]
-        BB["Shared DINOv2 backbone<br/>loaded once · 250 MB"]
-        subgraph Banks["One memory bank per ROI (25 MB each)"]
+        BB["Backbone DINOv2 compartilhado<br/>carregado uma vez · 250 MB"]
+        subgraph Banks["Um banco de memória por ROI (25 MB cada)"]
             M1[(ROI 1)]
             M2[(ROI 2)]
             M3[(...)]
             M4[(ROI 130)]
         end
     end
-    P[Panel photo] --> AL[Align to the reference] --> CR[Crop the 130 ROIs]
+    P[Foto do painel] --> AL[Alinha com a referência] --> CR[Recorta as 130 ROIs]
     CR --> BB
-    BB --> KNN{Compare with that ROI's bank}
+    BB --> KNN{Compara com o banco daquela ROI}
     Banks --> KNN
-    KNN --> S[ROI score]
-    S -->|above the limit| NOK[Defect: draw the outline]
-    S -->|below the limit| OK[Good]
+    KNN --> S[Nota da ROI]
+    S -->|acima do limite| NOK[Defeito: desenha o contorno]
+    S -->|abaixo do limite| OK[Boa]
 ```
 
-In the code this became two main parts: one that loads the backbone once and lends it to everybody ([`backbone.py`](src/pcbad/backbone.py)), and one that represents the model of each ROI, keeping only its memory bank and threshold ([`patchcore.py`](src/pcbad/patchcore.py)). The score is still computed by anomalib itself.
+No código, isso ficou em duas partes principais: uma que carrega o backbone uma vez e empresta para todo mundo ([`backbone.py`](src/pcbad/backbone.py)), e outra que representa o modelo de cada ROI, guardando só o banco de memória e o limiar ([`patchcore.py`](src/pcbad/patchcore.py)). O cálculo da nota continua sendo o do próprio anomalib.
 
-### 2.5 Parameters and why I picked them
+### 2.5 Parâmetros e por que escolhi cada um
 
-Every number in the configuration has a story:
+Cada número da configuração tem uma história:
 
-| Parameter | Value | Why |
+| Parâmetro | Valor | Por quê |
 |---|---|---|
-| Backbone | DINOv2 ViT-B (base version) | on the same 17 production photos, the gap between the real short and the most "unusual" good ROI went from 11% with WideResNet-50 to 50% with DINOv2. At 11% there is almost no room to place the threshold. The cost is time: 19 to 91 ms per ROI. On VisA it went the other way, and I tell that story in Section [3.5](#35-public-pcbs-visa). |
-| Layer | block 8 of 12 | a block in the middle of the network, which sees shape without losing local detail. The layer test on VisA (Section [3.5](#35-public-pcbs-visa)) made me rethink this choice. |
-| ROI size and input size | 512 px ROI, 518 px input | DINOv2 works with 14 px tiles, so the input has to be a multiple of 14, and 518 is the closest to 512. The ROI is enlarged just a little and loses no resolution. Each tile covers about 0.6 mm of board, and a short is 1 mm or more. |
-| How much to keep in the bank (coreset) | 10% of the vectors, going down slowly with more photos, never below 1% | keeping 50%, the 130 models would need 10.6 GB; with 10%, about 2 GB. The PatchCore paper itself uses 1% and gets the same result as the full bank. The way I set it, doubling the photos makes the bank grow 41%, not 100% (Figure 8). |
-| Neighbors used in the score | 9 | it's the default of the paper and of anomalib. It worked well, so I left it, and the VisA test confirmed 9 is among the best values. |
-| Threshold | computed from good photos only | explained in Section [2.6](#26-a-threshold-without-defective-samples) |
-| Sensitivity margin | 1.15 | the final limit is the computed threshold plus 15%. It's a small extra so the station doesn't raise false alarms for nothing over a small change in light or position, and real defects still score above it. |
-| Seed | 42 | the coreset choice starts from a random point. With the seed fixed, retraining on the same photos gives exactly the same threshold (22.082272 both times). With other seeds it moves about 5%. |
-| Defect outline | half of the heat-map peak | that way a small defect gets a small outline and a big defect gets a big one. I picked yellow and magenta because they stay easy to tell apart for color-blind people. |
+| Backbone | DINOv2 ViT-B (versão base) | nas mesmas 17 fotos de produção, a folga entre o curto real e a ROI boa mais "estranha" foi de 11% com a WideResNet-50 para 50% com o DINOv2. Com 11% quase não sobra espaço para colocar o limiar. O custo é tempo: de 19 para 91 ms por ROI. No VisA o resultado foi o contrário, e eu conto isso na seção [3.5](#35-pcbs-públicas-visa). |
+| Camada | bloco 8 de 12 | um bloco do meio da rede, que enxerga forma sem perder o detalhe local. O teste de camadas no VisA (seção [3.5](#35-pcbs-públicas-visa)) me fez repensar essa escolha. |
+| Tamanho da ROI e da entrada | ROI de 512 px, entrada de 518 px | o DINOv2 trabalha com quadradinhos de 14 px, então a entrada precisa ser múltipla de 14, e 518 é a mais perto de 512. A ROI é ampliada só um pouquinho e não perde resolução. Cada quadradinho cobre uns 0,6 mm de placa, e um curto tem 1 mm ou mais. |
+| Quanto guardar no banco (coreset) | 10% dos vetores, diminuindo aos poucos com mais fotos, nunca abaixo de 1% | guardando 50%, os 130 modelos precisariam de 10,6 GB; com 10%, uns 2 GB. O próprio artigo do PatchCore usa 1% e chega no mesmo resultado do banco completo. Do jeito que deixei, dobrar as fotos aumenta o banco em 41%, e não em 100% (Figura 8). |
+| Vizinhos usados na nota | 9 | é o padrão do artigo e do anomalib. Funcionou bem, então deixei, e o teste no VisA confirmou que 9 está entre os melhores valores. |
+| Limiar | calculado só com fotos boas | explico na seção [2.6](#26-limiar-sem-nenhuma-amostra-com-defeito) |
+| Margem de sensibilidade | 1,15 | o limite final é o limiar calculado mais 15%. É um chorinho a mais para a estação não ficar dando falso defeito à toa por uma variação pequena de luz ou de posição, e defeito de verdade continua acima disso. |
+| Semente | 42 | a escolha do coreset começa num ponto aleatório. Com a semente fixa, retreinar com as mesmas fotos dá exatamente o mesmo limiar (deu 22,082272 nas duas vezes). Com outras sementes ele varia uns 5%. |
+| Contorno do defeito | metade do pico do mapa de calor | assim um defeito pequeno ganha um contorno pequeno e um defeito grande ganha um contorno grande. Escolhi amarelo e magenta porque continuam fáceis de distinguir para quem é daltônico. |
 
 <p align="center">
-  <img src="assets/figures/coreset_growth.png" width="80%"><br>
-  <i>Figure 8. Size of the memory bank as the number of training photos grows.</i>
+  <img src="assets/figures/coreset_growth_pt.png" width="80%"><br>
+  <i>Figura 8. Tamanho do banco de memória conforme o número de fotos de treino cresce.</i>
 </p>
 
-And why not keep the whole bank? Because fifty photos of the same jig, under the same light, give almost identical tiles at each position, and most of a ROI is flat green solder mask. Even keeping 10%, the bank still has about 8 600 vectors. In the end, what really matters is the variety of the photos, much more than the size of the bank.
+E por que não guardar o banco inteiro? Porque cinquenta fotos da mesma jiga, com a mesma luz, dão quadradinhos quase iguais em cada posição, e a maior parte da ROI é máscara verde lisa. Mesmo guardando 10%, o banco ainda fica com uns 8 600 vetores. No fim, o que pesa de verdade é a variedade das fotos, muito mais do que o tamanho do banco.
 
-### 2.6 A threshold without defective samples
+### 2.6 Limiar sem nenhuma amostra com defeito
 
-To set a rejection threshold you usually need defective examples. I have none at training time, so the threshold has to come from the good photos themselves.
+Para definir um limiar de reprovação, normalmente você precisa de exemplos com defeito. Eu não tenho nenhum na hora do treino, então o limiar tem que sair das próprias fotos boas.
 
-At first I used anomalib's default, and that's how I found the random-split problem I mentioned above. I replaced it with this:
+No começo eu usava o padrão do anomalib, e foi aí que percebi o problema do sorteio que contei acima. Troquei por isto:
 
-1. All good photos go into the memory bank.
-2. Then each photo gets a score as if it were a new part, using the bank without the pieces that came from that photo (the technique is known as *leave-one-out*).
-3. The threshold goes at the point that leaves 90% of those scores below it. That way, if one or two odd photos (say, a defect that slipped into the training set) score high, they don't pull the threshold up.
-4. The 1.15 margin goes on top.
+1. Todas as fotos boas entram no banco de memória.
+2. Depois, cada foto recebe uma nota como se fosse uma peça nova, usando o banco sem os pedaços que vieram dela mesma (a técnica é conhecida como "deixa um de fora", ou *leave-one-out*).
+3. O limiar fica num ponto que deixa 90% dessas notas abaixo dele. Assim, se uma ou outra foto estranha (um defeito que escapou para o treino, por exemplo) tiver nota alta, ela não puxa o limiar para cima.
+4. Em cima disso entra a margem de 1,15.
 
-I was worried that this shortcut (removing the photo's pieces instead of training again without it) would not hold, so I compared it against real retraining on 78 production photos. It matched: the difference stayed between 0.1% and 4%. The comparison also showed why you can't score a photo with itself still in the bank: one odd photo scored 15.5 that way and 39.9 without it. Exactly the photo I wanted to find was being hidden.
+Fiquei com medo de esse atalho (tirar os pedaços da foto em vez de treinar de novo sem ela) não valer, então comparei com um retreino de verdade em 78 fotos de produção. Bateu: a diferença ficou entre 0,1% e 4%. A comparação também mostrou por que não dá para avaliar a foto com ela mesma no banco: uma foto estranha tirou 15,5 assim e 39,9 sem ela. Justamente a foto que eu queria achar ficava escondida.
 
-On VisA this calibration did what it should on the good boards: with the 1.15 margin, false alarms on unseen good boards stayed between 0 and 7%. The price is letting more defects through. With the production setting it caught only 7 to 17% of the defective boards; without the margin it caught 30 to 41%, with 4 to 14% false alarms. The margin is exactly the knob that trades one for the other.
+No VisA essa calibração fez o que devia nas placas boas: com a margem de 1,15, o falso defeito em placa boa nunca vista ficou entre 0 e 7%. O preço é deixar passar mais defeitos. Com a configuração de produção, ela pegou só de 7 a 17% das placas com defeito; sem a margem, pegou de 30 a 41%, com 4 a 14% de falso defeito. A margem é justamente o botão que troca uma coisa pela outra.
 
 <p align="center">
-  <img src="assets/figures/visa_threshold.png" width="100%"><br>
-  <i>Figure 9. VisA, DINOv2 ViT-B block 8: scores of unseen good and defective boards, and the line of the limit. The limit came from the good training photos only.</i>
+  <img src="assets/figures/visa_threshold_pt.png" width="100%"><br>
+  <i>Figura 9. VisA, DINOv2 ViT-B bloco 8: notas de placas boas e com defeito nunca vistas, e a linha do limite. O limite saiu só das fotos boas de treino.</i>
 </p>
 
 ---
 
-## 3. Results
+## 3. Resultados
 
-Before the details, a summary of what I measured:
+Antes dos detalhes, um resumo do que eu medi:
 
-| Question | Answer | Where |
+| Pergunta | Resposta | Onde |
 |---|---|---|
-| Does sharing the backbone change the scores? | practically not, 0.001% difference | [3.1](#31-sharing-the-backbone-does-not-change-the-result) |
-| How much VRAM does it save? | 89.9% for 130 ROIs with DINOv2 ViT-B (35.0 GB to 3.54 GB) | [3.2](#32-memory) |
-| How fast does a ROI model load? | 18 ms from a 25 MB file, against 1.5 s from 275 MB | [3.3](#33-load-time-and-file-size) |
-| Is DINOv2 better than WideResNet? | on the production board yes, on VisA no | [3.4](#34-backbone-on-the-production-panels), [3.5](#35-public-pcbs-visa) |
-| Which DINOv2 layer works best on VisA? | block 2 (0.933); block 8, used in production, was the worst of four | [3.5](#which-dinov2-layer) |
-| Does keeping only 1% of the vectors hurt? | no, 0.812 against 0.789 with the full bank | [3.5](#the-other-parameters) |
+| Compartilhar o backbone muda as notas? | praticamente não, diferença de 0,001% | [3.1](#31-compartilhar-o-backbone-não-muda-o-resultado) |
+| Quanto de VRAM economiza? | 89,9% com 130 ROIs e DINOv2 ViT-B (de 35,0 GB para 3,54 GB) | [3.2](#32-memória) |
+| Quanto tempo leva para carregar um modelo de ROI? | 18 ms de um arquivo de 25 MB, contra 1,5 s de um de 275 MB | [3.3](#33-tempo-de-carga-e-tamanho-dos-arquivos) |
+| O DINOv2 é melhor que a WideResNet? | na placa de produção sim, no VisA não | [3.4](#34-backbone-nos-painéis-de-produção), [3.5](#35-pcbs-públicas-visa) |
+| Qual camada do DINOv2 funciona melhor no VisA? | o bloco 2 (0,933); o bloco 8, usado em produção, foi o pior dos quatro | [3.5](#qual-camada-do-dinov2) |
+| Guardar só 1% dos vetores piora alguma coisa? | não, 0,812 contra 0,789 com o banco inteiro | [3.5](#os-outros-parâmetros) |
 
-Every memory and time number was measured on my laptop:
+Todos os números de memória e tempo foram medidos no meu notebook:
 
 | | |
 |---|---|
 | GPU | NVIDIA RTX 1000 Ada Generation Laptop GPU, 6 GB |
 | Software | PyTorch 2.5.1, anomalib 2.2.0, timm 1.0.24 |
-| Bank size | that of 80 training photos per ROI |
+| Tamanho dos bancos | o de 80 fotos de treino por ROI |
 
-### 3.1 Sharing the backbone does not change the result
+### 3.1 Compartilhar o backbone não muda o resultado
 
-This was the first thing I had to prove, otherwise nothing else would matter. I compared my model with the shared backbone against anomalib's original model, using the same memory bank:
+Essa era a primeira coisa que eu precisava provar, senão o resto não valia nada. Comparei o meu modelo com backbone compartilhado contra o modelo original do anomalib, com o mesmo banco de memória:
 
-| Check | DINOv2 ViT-B | WideResNet-50 |
+| Verificação | DINOv2 ViT-B | WideResNet-50 |
 |---|---|---|
-| Difference in image score | 0.001% | 0 |
-| Difference in heat map | negligible (0.002 on a 0 to 8 scale) | negligible (0.005 on a 0 to 16 scale) |
-| Difference in backbone weights | none | none |
+| Diferença na nota da imagem | 0,001% | 0 |
+| Diferença no mapa de calor | desprezível (0,002 numa escala de 0 a 8) | desprezível (0,005 numa escala de 0 a 16) |
+| Diferença nos pesos do backbone | nenhuma | nenhuma |
 
-The tiny score difference comes from the DINO speed optimization I turned on, and the map difference comes from the faster smoothing. No board changes from approved to rejected because of it.
+A diferencinha na nota vem da otimização de velocidade do DINO que eu liguei, e a do mapa vem da suavização mais rápida. Nenhuma placa muda de aprovada para reprovada por causa disso.
 
-### 3.2 Memory
+### 3.2 Memória
 
-VRAM in use with 130 ROI models loaded:
+VRAM ocupada com 130 modelos de ROI carregados:
 
-| Backbone | Backbone size | Size of one bank | 130 ROIs, one full model each | 130 ROIs, shared backbone | Saving |
+| Backbone | Tamanho do backbone | Tamanho de um banco | 130 ROIs, um modelo completo cada | 130 ROIs, backbone compartilhado | Economia |
 |---|---|---|---|---|---|
-| WideResNet-50 | 15.8 MB | 19.8 MB | 4.55 GB (measured) | 2.55 GB | −43.8% |
-| DINOv2 ViT-S | 64.8 MB | 12.7 MB | 9.72 GB (estimated) | 1.67 GB | −82.8% |
-| DINOv2 ViT-B | 250.0 MB | 25.4 MB | 34.99 GB (estimated) | 3.54 GB | −89.9% |
+| WideResNet-50 | 15,8 MB | 19,8 MB | 4,55 GB (medido) | 2,55 GB | −43,8% |
+| DINOv2 ViT-S | 64,8 MB | 12,7 MB | 9,72 GB (estimado) | 1,67 GB | −82,8% |
+| DINOv2 ViT-B | 250,0 MB | 25,4 MB | 34,99 GB (estimado) | 3,54 GB | −89,9% |
 
-"Estimated" means that configuration does not fit in the GPU and I had no way to run it. The value is the measured cost of one model times the number of models, and the points I could measure fall right on that line (Figure 6).
+"Estimado" quer dizer que aquela configuração não cabe na GPU e eu não tinha como rodar. O valor é o custo medido de um modelo multiplicado pelo número de modelos, e os pontos que deu para medir caem certinho nessa reta (Figura 6).
 
-In practice, about 18 full DINOv2 ViT-B models fit on this 6 GB GPU. With the shared backbone about 190 fit, so any of the boards, with 110 to 120 ROIs, fits with room to spare.
+Na prática, nessa GPU de 6 GB cabem uns 18 modelos DINOv2 ViT-B completos. Com o backbone compartilhado cabem uns 190, então qualquer uma das placas, com 110 a 120 ROIs, entra com folga.
 
-The time per ROI doesn't change as models are added: about 90 ms with the shared backbone. Sharing only changes memory.
+O tempo por ROI não muda conforme os modelos entram: uns 90 ms com o backbone compartilhado. Compartilhar mexe só na memória.
 
-### 3.3 Load time and file size
+### 3.3 Tempo de carga e tamanho dos arquivos
 
-How long it takes to load one ROI model from disk, with the shared backbone already loaded:
+Quanto tempo leva para carregar um modelo de ROI do disco, com o backbone compartilhado já carregado:
 
-| Backbone | Standard anomalib file | File with the bank only |
+| Backbone | Arquivo padrão do anomalib | Arquivo só com o banco |
 |---|---|---|
-| WideResNet-50 | 35.6 MB, 0.98 s | 19.8 MB, 0.009 s |
-| DINOv2 ViT-S | 76.6 MB, 0.36 s | 12.7 MB, 0.006 s |
-| DINOv2 ViT-B | 274.6 MB, 1.54 s | 25.4 MB, 0.018 s |
+| WideResNet-50 | 35,6 MB, 0,98 s | 19,8 MB, 0,009 s |
+| DINOv2 ViT-S | 76,6 MB, 0,36 s | 12,7 MB, 0,006 s |
+| DINOv2 ViT-B | 274,6 MB, 1,54 s | 25,4 MB, 0,018 s |
 
-For a 130-ROI panel with ViT-B, that's the difference between waiting about 3 minutes and waiting 2 seconds for the station to be ready.
+Num painel de 130 ROIs com ViT-B, isso é a diferença entre esperar uns 3 minutos e esperar 2 segundos para a estação ficar pronta.
 
-### 3.4 Backbone on the production panels
+### 3.4 Backbone nos painéis de produção
 
-I ran this test earlier, on the production server, and it is what made me switch to DINOv2: one board, 17 photos, one real short.
+Esse teste eu fiz antes, no servidor de produção, e foi ele que me fez trocar para o DINOv2: uma placa, 17 fotos, um curto real.
 
 | | WideResNet-50 | DINOv2 ViT-B |
 |---|---|---|
-| Score of the real short | 1.027 | 1.356 |
-| Highest score among good ROIs | 0.924 | 0.906 |
-| Gap between the short and the worst good ROI | 11% | 50% |
-| Time per ROI | 19 ms | 91 ms |
+| Nota do curto real | 1,027 | 1,356 |
+| Maior nota entre as ROIs boas | 0,924 | 0,906 |
+| Folga entre o curto e a pior ROI boa | 11% | 50% |
+| Tempo por ROI | 19 ms | 91 ms |
 
-With WideResNet the short scored only 11% above the worst good ROI, so any small variation turned into a miss or a false alarm. With DINOv2 that gap went to 50%. Later I also tried ViT-S, the smaller DINOv2, on the 7 hardest ROIs of Board C: it was faster (41 ms per ROI) and detected about the same.
+Com a WideResNet o curto ficava só 11% acima da pior ROI boa, e qualquer variação pequena virava defeito perdido ou falso defeito. Com o DINOv2 essa folga foi para 50%. Depois testei também o ViT-S, a versão menor do DINOv2, nas 7 ROIs mais difíceis da Placa C: foi mais rápido (41 ms por ROI) e detectou parecido.
 
-Looking back, this comparison was small: one board and one real short. And the VisA results right below don't agree with it. I come back to that in the conclusions.
+Olhando hoje, essa comparação foi pequena: uma placa e um curto real. E os resultados do VisA logo abaixo não concordam com ela. Volto nisso nas conclusões.
 
-### 3.5 Public PCBs (VisA)
+### 3.5 PCBs públicas (VisA)
 
-Since I can't publish the production photos, I ran the same code on the four PCB categories of VisA [6]. I used 100 good training photos per category (close to the ~80 per ROI I use on the line) and about 200 test photos per category, half good and half defective. Each board was treated as a single region. Everything here comes from [`scripts/eval_visa.py`](scripts/eval_visa.py), which took about 2 hours on the laptop. Since I only used 100 training photos (the full dataset has about 900 per category), these numbers are meant for comparing settings with each other, not with results published by other works.
+Como não posso publicar as fotos de produção, rodei o mesmo código nas quatro categorias de PCB do VisA [6]. Usei 100 fotos boas de treino por categoria (perto das ~80 por ROI que uso na linha) e umas 200 fotos de teste por categoria, metade boa e metade com defeito. Cada placa foi tratada como uma região só. Tudo aqui sai do [`scripts/eval_visa.py`](scripts/eval_visa.py), que levou umas 2 horas no notebook. Como usei só 100 fotos de treino (o dataset completo tem umas 900 por categoria), esses números servem para comparar as configurações entre si, e não com os resultados publicados por outros trabalhos.
 
-The main metric here is AUROC, which goes from 0.5 (guessing) to 1.0 (perfect) and measures how well the model separates good boards from defective ones.
+A métrica principal aqui é o AUROC, que vai de 0,5 (chute) a 1,0 (perfeito) e mede o quanto o modelo separa as placas boas das placas com defeito.
 
 <p align="center">
-  <img src="assets/figures/visa_backbones.png" width="100%"><br>
-  <i>Figure 10. Image AUROC (is the board defective?) and pixel AUROC (where is the defect?) per backbone on VisA.</i>
+  <img src="assets/figures/visa_backbones_pt.png" width="100%"><br>
+  <i>Figura 10. AUROC de imagem (a placa tem defeito?) e AUROC de pixel (onde está o defeito?) por backbone no VisA.</i>
 </p>
 
-| Setting | Image AUROC (mean of 4) | Pixel AUROC | Defects caught at 1.15 | False alarms at 1.15 |
+| Configuração | AUROC de imagem (média das 4) | AUROC de pixel | Defeitos pegos com margem 1,15 | Falso defeito com margem 1,15 |
 |---|---|---|---|---|
-| WideResNet-50 | 0.951 | 0.987 | 54–91% | 1–4% |
-| WideResNet-50, original paper setting | 0.922 | 0.988 | 32–94% | 0–6% |
-| DINOv2 ViT-S, block 8 | 0.808 | 0.972 | 8–23% | 0–7% |
-| DINOv2 ViT-B, block 8 (production setting) | 0.787 | 0.976 | 7–17% | 1–7% |
-| DINOv2 ViT-B, block 8, with cosine distance | 0.891 | 0.985 | 21–49% | 1–5% |
-| DINOv2 ViT-B, block 2 | 0.933 | 0.984 | 30–65% | 0–1% |
+| WideResNet-50 | 0,951 | 0,987 | 54–91% | 1–4% |
+| WideResNet-50, configuração do artigo original | 0,922 | 0,988 | 32–94% | 0–6% |
+| DINOv2 ViT-S, bloco 8 | 0,808 | 0,972 | 8–23% | 0–7% |
+| DINOv2 ViT-B, bloco 8 (configuração de produção) | 0,787 | 0,976 | 7–17% | 1–7% |
+| DINOv2 ViT-B, bloco 8, com distância cosseno | 0,891 | 0,985 | 21–49% | 1–5% |
+| DINOv2 ViT-B, bloco 2 | 0,933 | 0,984 | 30–65% | 0–1% |
 
-I have to admit this result caught me by surprise. On these boards the production setting was the weakest at telling whether a board has a defect, and WideResNet-50 was the best. For showing where the defect is (pixel AUROC), they all came out similar, between 0.97 and 0.99.
+Confesso que esse resultado me pegou de surpresa. Nessas placas a configuração de produção foi a mais fraca para dizer se a placa tem defeito, e a WideResNet-50 foi a melhor. Já para mostrar onde está o defeito (AUROC de pixel), todas ficaram parecidas, entre 0,97 e 0,99.
 
-My first suspicion was a mistake on my side, so I went to check how the DINO features were being extracted. Everything was right. What helped was changing the way the distance between pieces is measured to a cosine distance, as AnomalyDINO [2] does: that alone took block 8 from 0.787 to 0.891.
-
-<p align="center">
-  <img src="assets/figures/visa_backbones_maps.png" width="100%"><br>
-  <i>Figure 11. The same defective board seen by each backbone. The number below is the score divided by the limit (1.00 or more is rejected).</i>
-</p>
-
-So why doesn't this agree with the production test in Section 3.4, where DINOv2 gave the bigger gap? The two tests don't look at the same kind of defect. VisA has missing parts, scratches and melted components on small modules (sensors and chargers) photographed on a flat background, while the line has solder joints under fixed lighting. And the production test was small. My reading is that the backbone has to be validated per product, which is why in the code it's just a configuration option.
-
-#### Which DINOv2 layer
-
-DINOv2 has 12 blocks, and the features can come from any of them. I tested four:
+Minha primeira suspeita foi erro meu, então fui conferir a forma como as features do DINO são extraídas. Estava tudo certo. O que ajudou foi trocar a forma de medir a distância entre os pedaços por uma distância cosseno, como faz o AnomalyDINO [2]: isso sozinho levou o bloco 8 de 0,787 para 0,891.
 
 <p align="center">
-  <img src="assets/figures/visa_ablations.png" width="100%"><br>
-  <i>Figure 12. Left: AUROC by the DINOv2 block the features come from, with the backbone size in each case. Middle: number of neighbors used in the score. Right: how much of the bank is kept against AUROC.</i>
+  <img src="assets/figures/visa_backbones_maps_pt.png" width="100%"><br>
+  <i>Figura 11. A mesma placa com defeito vista por cada backbone. O número embaixo é a nota dividida pelo limite (1,00 ou mais reprova).</i>
 </p>
 
-| DINOv2 ViT-B block | Image AUROC | Pixel AUROC | Backbone size | Max VRAM saving |
+Por que isso não bate com o teste de produção da seção 3.4, em que o DINOv2 deu mais folga? Os dois testes não olham o mesmo tipo de defeito. O VisA tem componente faltando, risco e peça derretida em módulos pequenos (sensores e carregadores) fotografados sobre um fundo liso, e a linha tem solda, com iluminação fixa. E o teste de produção também foi pequeno. A leitura que eu faço é que o backbone precisa ser validado para cada produto, e por isso no código ele é só uma opção de configuração.
+
+#### Qual camada do DINOv2
+
+O DINOv2 tem 12 blocos, e dá para tirar as features de qualquer um deles. Testei quatro:
+
+<p align="center">
+  <img src="assets/figures/visa_ablations_pt.png" width="100%"><br>
+  <i>Figura 12. À esquerda, AUROC conforme o bloco do DINOv2 de onde saem as features, com o tamanho do backbone em cada caso. No meio, o número de vizinhos usado na nota. À direita, quanto do banco é guardado contra o AUROC.</i>
+</p>
+
+| Bloco do DINOv2 ViT-B | AUROC de imagem | AUROC de pixel | Tamanho do backbone | Economia máxima de VRAM |
 |---|---|---|---|---|
-| 2 | 0.933 | 0.984 | 87 MB | 78% |
-| 5 | 0.868 | 0.983 | 168 MB | 87% |
-| 8 (production) | 0.787 | 0.975 | 249 MB | 91% |
-| 11 | 0.904 | 0.985 | 331 MB | 93% |
+| 2 | 0,933 | 0,984 | 87 MB | 78% |
+| 5 | 0,868 | 0,983 | 168 MB | 87% |
+| 8 (produção) | 0,787 | 0,975 | 249 MB | 91% |
+| 11 | 0,904 | 0,985 | 331 MB | 93% |
 
-Block 8, the one I use in production, came out right at the bottom. Before believing it, I wanted to be sure the gap between block 2 and block 8 wasn't luck, so I ran a simple statistical test (bootstrap, with [`scripts/bootstrap_ci.py`](scripts/bootstrap_ci.py)). Block 2's advantage held in all four categories, with a safe margin. Training block 2 again from scratch moved the result by less than 0.01.
+O bloco 8, que eu uso em produção, ficou bem no fundo. Antes de acreditar, quis ter certeza de que a diferença entre o bloco 2 e o bloco 8 não era sorte, então fiz um teste estatístico simples (bootstrap, com o [`scripts/bootstrap_ci.py`](scripts/bootstrap_ci.py)). A vantagem do bloco 2 se manteve nas quatro categorias, com margem de segurança. Treinando o bloco 2 de novo do zero, o resultado mudou menos de 0,01.
 
-A block closer to the start of the network also makes the backbone smaller, so block 2 would be faster and use less VRAM, even if sharing saves a bit less (78% instead of 91%). I haven't tested block 2 on the solder joints yet, but it's the first thing I want to try on the line.
+Um bloco mais no começo da rede também deixa o backbone menor, então o bloco 2 seria mais rápido e gastaria menos VRAM, mesmo economizando um pouco menos no compartilhamento (78% em vez de 91%). Ainda não testei o bloco 2 nas soldas, mas é a primeira coisa que quero testar na linha.
 
-#### The other parameters
+#### Os outros parâmetros
 
-- Neighbors used in the score: 1 and 9 give almost the same result, and 3 was worse in all four categories, which I can't explain. I kept 9.
-- Bank size: keeping only 1% of the vectors gave 0.812, and the full bank (100 times bigger) gave 0.789. On these boards, keeping less didn't hurt at all, just as the PatchCore paper promises.
+- Vizinhos usados na nota: 1 e 9 dão quase o mesmo resultado, e 3 foi pior nas quatro categorias, o que eu não sei explicar. Mantive 9.
+- Tamanho do banco: guardar só 1% dos vetores deu 0,812, e o banco inteiro (100 vezes maior) deu 0,789. Nessas placas, guardar menos não piorou nada, como o artigo do PatchCore promete.
 
-#### The first two attempts, on public data
-
-<p align="center">
-  <img src="assets/figures/visa_story.png" width="100%"><br>
-  <i>Figure 13. Left: each test board placed among other good boards, to imitate a panel. Right: one model trained on the four board types together against one model per type.</i>
-</p>
-
-To imitate Attempt 1, I placed each board among other good boards (4, 9 and 16 boards per image) and trained and tested that way. Mean AUROC fell from 0.791 with the board alone to 0.677, 0.667 and 0.654. On pcb1 it reached 0.503, which is the same as guessing. pcb2 went the other way, and I still don't have an explanation for it.
-
-For Attempt 2, I trained one model on the four board types together, and the result barely changed. That looked strange at first, but it fits what I told in Section 2.3: a single model only breaks when the same thing is normal in one place and a defect in another, like the intentional shorts on the line. VisA has no such case, so this test had no way of reproducing that failure.
-
-#### Examples
+#### As duas primeiras tentativas com dados públicos
 
 <p align="center">
-  <img src="assets/figures/visa_examples.png" width="100%"><br>
-  <i>Figure 14. One defective board per category: the photo, the defect marked in the ground truth, the heat map from block 8 (production), the one from block 2, and the outline drawn from block 2.</i>
+  <img src="assets/figures/visa_story_pt.png" width="100%"><br>
+  <i>Figura 13. À esquerda, cada placa de teste colocada no meio de outras placas boas, para imitar um painel. À direita, um modelo treinado com os quatro tipos de placa juntos contra um modelo por tipo.</i>
+</p>
+
+Para imitar a tentativa 1, coloquei cada placa no meio de outras placas boas (4, 9 e 16 placas por imagem) e treinei e testei assim. O AUROC médio caiu de 0,791 com a placa sozinha para 0,677, 0,667 e 0,654. No pcb1 chegou a 0,503, que é o mesmo que chutar. O pcb2 foi para o outro lado, e ainda não tenho uma explicação para isso.
+
+Para a tentativa 2, treinei um modelo só com os quatro tipos de placa juntos, e o resultado praticamente não mudou. No começo achei estranho, mas faz sentido com o que contei na seção 2.3: o modelo único só quebra quando a mesma coisa é normal num lugar e defeito em outro, como nos curtos propositais da linha. O VisA não tem esse caso, então esse teste não tinha como reproduzir aquela falha.
+
+#### Exemplos
+
+<p align="center">
+  <img src="assets/figures/visa_examples_pt.png" width="100%"><br>
+  <i>Figura 14. Uma placa com defeito por categoria: a foto, o defeito marcado no gabarito, o mapa de calor do bloco 8 (produção), o do bloco 2 e o contorno desenhado a partir do bloco 2.</i>
 </p>
 
 <p align="center">
-  <img src="assets/figures/visa_qualitative.png" width="100%"><br>
-  <i>Figure 15. With block 2 and margin 1.15: defective boards the system caught (yellow and magenta outline), defective boards that got through (heat map) and good boards it rejected. The number is the score divided by the limit. The only false alarm across the four categories was a tiny speck on the background, outside the board: the same "flags what is new, not what matters" that happens with scratches on the line.</i>
+  <img src="assets/figures/visa_qualitative_pt.png" width="100%"><br>
+  <i>Figura 15. Com o bloco 2 e margem 1,15: placas com defeito que o sistema pegou (contorno amarelo e magenta), placas com defeito que passaram (mapa de calor) e placas boas que ele reprovou. O número é a nota dividida pelo limite. O único falso defeito das quatro categorias foi um grãozinho no fundo, fora da placa: o mesmo "marca o que é novo, não o que importa" que acontece com os riscos na linha.</i>
 </p>
 
-### 3.6 On the production line
+### 3.6 Na linha de produção
 
-These were measured on the production server, before this repository existed. The biggest one applies a solder filter (more about it in the next steps) to every old rejection that still had its original photo: 163 ROIs from the three boards, each evaluated again by the current model.
+Estas medições foram feitas no servidor de produção, antes deste repositório existir. A maior delas aplica um filtro de solda (conto mais nos próximos passos) em todas as reprovações antigas que ainda tinham a foto original: 163 ROIs das três placas, cada uma avaliada de novo pelo modelo atual.
 
-| Board | Rejected at the time | Pass with today's model | Dropped by the solder filter | Still rejected |
+| Placa | Reprovadas na época | Aprovam com o modelo de hoje | Descartadas pelo filtro de solda | Continuam reprovando |
 |---|---|---|---|---|
 | A | 64 | 32 | 0 | 32 |
 | B | 45 | 0 | 25 | 20 |
 | C | 54 | 0 | 40 | 14 |
 
-I checked the 65 dropped ones one by one: smooth solder mask, labels, mounting holes, none of them on a joint. The known shorts were still rejected. On one job of Board C, the rejections went from 11 (1 short and 10 scratches) to 3. And half of Board A's old rejections already pass with today's model, before any filter.
+Conferi as 65 descartadas uma por uma: máscara lisa, etiqueta, furo de fixação, nenhuma em cima de solda. Os curtos conhecidos continuaram reprovando. Num job da Placa C, as reprovações caíram de 11 (1 curto e 10 riscos) para 3. E metade das reprovações antigas da Placa A já passa com o modelo de hoje, antes de qualquer filtro.
 
-On the 7 hardest ROIs of Board C, with simulated defects, DINOv2 ViT-S caught 13 of 20 missing joints and 3 of 20 solder balls. Solder balls are small, and with the 1.15 margin the model lets most of them through.
+Nas 7 ROIs mais difíceis da Placa C, com defeitos simulados, o DINOv2 ViT-S pegou 13 de 20 faltas de solda e 3 de 20 bolinhas de solda. Bolinha de solda é pequena, e com a margem de 1,15 o modelo deixa passar a maioria.
 
-What is still missing is a test set from the line with the defects marked, to measure how many defects the system catches and how many false alarms it gives on each board, as I did for VisA in Section 3.5.
-
----
-
-## 4. Conclusions
-
-PatchCore with one model per ROI finds solder defects using good panels only, and that is exactly what makes it usable on a line where defects are rare. Looking back, the attempts that failed taught me the most. The whole-panel model showed that resolution comes before everything else. The single shared model showed that position matters, at least on boards with intentional shorts and empty pads: each ROI needs its own idea of normal.
-
-The main contribution came when I realized that this per-ROI design was spending almost all of its memory on identical copies of the same network. Sharing one backbone and keeping only the memory banks per ROI:
-
-- the scores stay practically the same as anomalib's;
-- VRAM goes down 90% with DINOv2 ViT-B, from 35 GB to 3.5 GB for 130 ROIs, which in practice is the difference between not running and running on a 6 GB laptop GPU;
-- each model becomes a 25 MB file that loads in 18 ms.
-
-And the bigger the backbone, the bigger the saving: about 44% with WideResNet-50 and about 90% with DINOv2 ViT-B.
-
-The VisA test was the most useful surprise of the whole work. On those boards the production setting (DINOv2 ViT-B at block 8) was the weakest of the ones I tried, and block 2 of the same network or WideResNet-50 told defective boards from good ones much better. Just changing the way the distance is measured already took block 8 from 0.787 to 0.891. On the solder joints of the line DINOv2 had given the bigger gap, but that comparison used one board and one real short. I come out of this with two certainties: backbone and layer have to be checked on each product, and the architecture makes that check cheap, because both are just configuration options and the VRAM saving holds for any of them.
-
-#### Limitations
-
-- PatchCore flags what is new, and that is not always what matters. To it, a scratch or a speck of dust is as strange as a short: in one production job, 10 of the 11 rejected ROIs were scratches and only 1 was a real short.
-- It depends on a fixed camera and jig. If the panel moves the photo has to be aligned, and if the light or the camera change it has to be trained again.
-- The configurations with one full model per ROI that don't fit in the GPU were estimated, not measured. The points I could measure match the estimate, but the biggest values are extrapolations.
-- The training photos need checking: a defective panel that slips into training teaches the model that its defect is normal.
-- I still don't have a test set from the line with the defects marked, so production detection is shown through the comparison in Section 3.4 and the re-evaluated rejections in Section 3.6.
-
-#### Next steps
-
-- Test DINOv2 block 2, cosine distance and WideResNet-50 on the solder joints, with a test set from the line.
-- Bring into this repository the solder filter that already runs in production and was left out of scope here. It ignores anomalies that fall far from any solder: on 163 old rejections from three boards it dropped 65, each checked by hand as scratches and stains, and the known shorts were still rejected.
-- Make the memory banks even smaller to bring VRAM further down.
-- Process all ROIs of a panel at once, instead of one by one, so a panel comes out faster.
+O que ainda falta é um conjunto de teste da linha com os defeitos marcados, para medir quantos defeitos o sistema pega e quantos falsos defeitos ele dá em cada placa, como fiz para o VisA na seção 3.5.
 
 ---
 
-## 5. FAQ
+## 4. Conclusões
+
+O PatchCore com um modelo por ROI acha defeito de solda usando só painel bom, e é exatamente isso que o torna utilizável numa linha em que defeito é raro. Olhando para trás, as tentativas que falharam foram as que mais me ensinaram. O modelo do painel inteiro mostrou que resolução vem antes de tudo. O modelo único mostrou que posição importa, pelo menos em placa com curto proposital e pad vazio: cada ROI precisa da sua própria ideia de normal.
+
+A contribuição principal veio quando percebi que esse desenho por ROI gastava quase toda a memória com cópias iguais da mesma rede. Compartilhando um backbone e guardando só os bancos de memória por ROI:
+
+- as notas continuam praticamente as mesmas do anomalib;
+- a VRAM cai 90% com o DINOv2 ViT-B, de 35 GB para 3,5 GB com 130 ROIs, que na prática é a diferença entre não rodar e rodar numa GPU de notebook de 6 GB;
+- cada modelo vira um arquivo de 25 MB que carrega em 18 ms.
+
+E quanto maior o backbone, maior a economia: uns 44% com a WideResNet-50 e uns 90% com o DINOv2 ViT-B.
+
+O teste no VisA foi a surpresa mais útil do trabalho. Nessas placas a configuração de produção (DINOv2 ViT-B no bloco 8) foi a mais fraca das que testei, e o bloco 2 da mesma rede ou a WideResNet-50 separaram muito melhor placa boa de placa com defeito. Só trocar a forma de medir a distância já levou o bloco 8 de 0,787 para 0,891. Nas soldas da linha o DINOv2 tinha dado mais folga, mas aquela comparação usou uma placa e um curto real. Saio disso com duas certezas: backbone e camada precisam ser conferidos em cada produto, e a arquitetura deixa essa conferência barata, porque os dois são só opções de configuração e a economia de VRAM vale para qualquer um deles.
+
+#### Limitações
+
+- O PatchCore marca o que é novo, e isso nem sempre é o que importa. Para ele, um risco ou um grão de poeira é tão estranho quanto um curto: num job de produção, 10 das 11 ROIs reprovadas eram riscos e só 1 era curto de verdade.
+- Ele depende de câmera e jiga fixas. Se o painel se mexer é preciso alinhar a foto, e se a luz ou a câmera mudarem é preciso treinar de novo.
+- As configurações com um modelo completo por ROI que não cabem na GPU foram estimadas, não medidas. Os pontos que deu para medir batem com a estimativa, mas os valores maiores são extrapolação.
+- As fotos de treino precisam ser conferidas: um painel com defeito que entra no treino ensina ao modelo que aquele defeito é normal.
+- Ainda não tenho um conjunto de teste da linha com os defeitos marcados, então a detecção em produção aparece pela comparação da seção 3.4 e pelas reprovações reavaliadas da seção 3.6.
+
+#### Próximos passos
+
+- Testar o bloco 2 do DINOv2, a distância cosseno e a WideResNet-50 nas soldas, com um conjunto de teste da linha.
+- Trazer para este repositório o filtro de solda que já roda em produção e ficou fora do escopo aqui. Ele ignora anomalias que caem longe de qualquer solda: em 163 reprovações antigas de três placas, descartou 65, todas conferidas uma a uma como riscos e manchas, e os curtos conhecidos continuaram reprovando.
+- Diminuir ainda mais os bancos de memória para baixar a VRAM.
+- Processar todas as ROIs de um painel de uma vez só, em vez de uma por uma, para o painel sair mais rápido.
+
+---
+
+## 5. Perguntas frequentes
 
 <details>
-<summary><b>Why not YOLO or another supervised detector?</b></summary>
+<summary><b>Por que não YOLO ou outro detector supervisionado?</b></summary>
 
-Because I would need hundreds of labeled examples of every defect type, and here defects are rare and keep changing. PatchCore needs good panels only, and it still catches defects nobody had listed before. The downside is that it flags anything new, scratches included (see Limitations).
+Porque eu precisaria de centenas de exemplos rotulados de cada tipo de defeito, e aqui defeito é raro e muda o tempo todo. O PatchCore só precisa de painel bom e ainda pega defeito que ninguém tinha listado antes. O lado ruim é que ele marca qualquer coisa nova, risco incluso (ver Limitações).
 </details>
 
 <details>
-<summary><b>Does sharing the backbone change the detection?</b></summary>
+<summary><b>Compartilhar o backbone muda a detecção?</b></summary>
 
-No. The backbone is the same in every model, and the scores match the original anomalib with a 0.001% difference (Section 3.1).
+Não. O backbone é o mesmo em todos os modelos, e as notas batem com o anomalib original com diferença de 0,001% (seção 3.1).
 </details>
 
 <details>
-<summary><b>Why DINOv2 and not the WideResNet-50 from the paper?</b></summary>
+<summary><b>Por que DINOv2 e não a WideResNet-50 do artigo?</b></summary>
 
-On the real panels DINOv2 moved the gap between a real short and the worst good ROI from 11% to 50%, and the threshold stopped sitting on a knife's edge. A bigger backbone also makes sharing pay off more, about 90% instead of 44%. On VisA, though, WideResNet did better (Section 3.5), so this is a choice to check on each product. In the code the backbone is just a configuration option.
+Nos painéis reais o DINOv2 abriu a folga entre um curto real e a pior ROI boa de 11% para 50%, e o limiar deixou de ficar tão no fio da navalha. Backbone maior também faz o compartilhamento render mais, uns 90% em vez de 44%. Só que no VisA a WideResNet foi melhor (seção 3.5), então essa é uma escolha para conferir em cada produto. No código o backbone é só uma opção de configuração.
 </details>
 
 <details>
-<summary><b>How many good photos does a new ROI need?</b></summary>
+<summary><b>Quantas fotos boas uma ROI nova precisa?</b></summary>
 
-The code refuses fewer than 5. On the line, 50 to 80 panels per ROI worked well. Variety counts more than quantity: 50 different panels are worth more than 200 photos of the same panel, because the model needs to learn how good panels vary from one to another.
+O código recusa menos de 5. Na linha, de 50 a 80 painéis por ROI funcionou bem. Variedade conta mais que quantidade: 50 painéis diferentes valem mais que 200 fotos do mesmo painel, porque o modelo precisa aprender como os painéis bons variam entre si.
 </details>
 
 <details>
-<summary><b>What if a defective panel gets into the training set?</b></summary>
+<summary><b>E se um painel com defeito entrar no treino?</b></summary>
 
-The model learns that defect as normal for that ROI and will pass it. The way the threshold is computed keeps one or two bad photos from raising the limit for every other defect, but it doesn't unlearn the one that got in. It's always worth taking a look at the training photos.
+O modelo aprende aquele defeito como normal para a ROI e vai aprovar. O jeito de calcular o limiar impede que uma ou duas fotos ruins subam o limite para todos os outros defeitos, mas não desaprende o que entrou. Vale sempre dar uma olhada nas fotos de treino.
 </details>
 
 <details>
-<summary><b>Does it need a GPU?</b></summary>
+<summary><b>Precisa de GPU?</b></summary>
 
-No, it runs on the CPU too, just much slower. The whole point of sharing the backbone is that a 6 GB laptop GPU can handle a full panel.
+Não, roda na CPU também, só que bem mais devagar. A graça de compartilhar o backbone é justamente que uma GPU de notebook de 6 GB dá conta do painel inteiro.
 </details>
 
 <details>
-<summary><b>Glossary</b></summary>
+<summary><b>Glossário</b></summary>
 
-| Term | Meaning here |
+| Termo | O que quer dizer aqui |
 |---|---|
-| ROI | region of interest, a 512 × 512 px crop of the panel around a group of joints |
-| Backbone | network already trained that turns an image into numbers; here it is never trained again |
-| Memory bank | the pieces of good photos each ROI model keeps for comparison |
-| Coreset | the choice of which pieces to keep in the bank, picking the most different ones |
-| Score | how far the strangest piece of the photo is from the most similar good piece; 1.0 or more (after dividing by the limit) is a defect |
-| Threshold, margin | the computed limit for the score, and the 15% extra on top of it |
-| AUROC | metric from 0.5 (guessing) to 1.0 (perfect) that measures how well the model separates good boards from defective ones |
-| VRAM | memory of the graphics card (GPU) |
+| ROI | região de interesse, um recorte de 512 × 512 px do painel em volta de um grupo de soldas |
+| Backbone | rede já treinada que transforma a imagem em números; aqui ela nunca é treinada de novo |
+| Banco de memória | os pedaços das fotos boas que cada modelo de ROI guarda para comparar |
+| Coreset | a escolha de quais pedaços guardar no banco, ficando com os mais diferentes entre si |
+| Nota | o quanto o pedaço mais estranho da foto está longe do pedaço bom mais parecido; 1,0 ou mais (depois de dividir pelo limite) é defeito |
+| Limiar, margem | o limite calculado para a nota e os 15% de folga por cima dele |
+| AUROC | métrica de 0,5 (chute) a 1,0 (perfeito) que mede o quanto o modelo separa placas boas de placas com defeito |
+| VRAM | memória da placa de vídeo (GPU) |
 </details>
 
 ---
 
-## 6. How to run
+## 6. Como executar
 
-**1. Environment** (Python 3.10, NVIDIA GPU recommended)
+**1. Ambiente** (Python 3.10, GPU NVIDIA recomendada)
 
 ```bash
 python -m venv .venv
@@ -629,15 +629,15 @@ python -m venv .venv
 pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
 ```
 
-The DINOv2 weights (about 350 MB) download by themselves the first time.
+Os pesos do DINOv2 (uns 350 MB) baixam sozinhos na primeira vez.
 
-**2. Quick test on a public PCB** (VisA)
+**2. Teste rápido numa PCB pública** (VisA)
 
-If you just want to see the system working, this is the shortest path:
+Se você só quer ver o sistema funcionando, esse é o caminho mais curto:
 
 ```bash
 mkdir -p data/visa && cd data/visa
-curl -LO https://amazon-visual-anomaly.s3.us-west-2.amazonaws.com/VisA_20220922.tar     # 1.9 GB
+curl -LO https://amazon-visual-anomaly.s3.us-west-2.amazonaws.com/VisA_20220922.tar     # 1,9 GB
 mkdir VisA && tar -xf VisA_20220922.tar -C VisA --wildcards "pcb*/*"
 curl -LO https://raw.githubusercontent.com/amazon-science/spot-diff/main/split_csv/1cls.csv
 cd ../..
@@ -647,22 +647,24 @@ python scripts/train.py --board data/visa_demo/pcb1 --out models/visa_pcb1
 python scripts/infer.py --models models/visa_pcb1 --images data/visa_demo/pcb1/test --out outputs/visa_pcb1
 ```
 
-**3. Reproducing the numbers in this README**
+**3. Reproduzir os números deste README**
 
-| Command | What it produces | Time on my laptop |
+| Comando | O que gera | Tempo no meu notebook |
 |---|---|---|
-| `python scripts/check_equivalence.py --backbone dinov2_vitb14` | Section 3.1 | under 1 min |
-| `python scripts/benchmark_vram.py` | Sections 3.2 and 3.3, Figures 6 and 7 | about 15 min |
-| `python scripts/eval_visa.py --visa data/visa/VisA --split data/visa/1cls.csv` | Section 3.5 | about 3 h |
-| `python scripts/make_figures.py` | Figures 6 to 8, overview figure, VRAM animation | seconds |
-| `python scripts/visa_layer_examples.py --visa data/visa/VisA --split data/visa/1cls.csv` | block-2 heat maps for Figure 14 | about 10 min |
-| `python scripts/bootstrap_ci.py --visa data/visa/VisA --split data/visa/1cls.csv` | statistical test in Section 3.5 | under 1 min |
-| `python scripts/make_visa_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | VisA charts | under 1 min |
-| `python scripts/make_visa_photo_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | Figures 4, 11 and 15 | about 15 min |
+| `python scripts/check_equivalence.py --backbone dinov2_vitb14` | seção 3.1 | menos de 1 min |
+| `python scripts/benchmark_vram.py` | seções 3.2 e 3.3, Figuras 6 e 7 | uns 15 min |
+| `python scripts/eval_visa.py --visa data/visa/VisA --split data/visa/1cls.csv` | seção 3.5 | umas 3 h |
+| `python scripts/make_figures.py` | Figuras 6 a 8, figura geral, animação de VRAM | segundos |
+| `python scripts/visa_layer_examples.py --visa data/visa/VisA --split data/visa/1cls.csv` | mapas do bloco 2 da Figura 14 | uns 10 min |
+| `python scripts/bootstrap_ci.py --visa data/visa/VisA --split data/visa/1cls.csv` | teste estatístico da seção 3.5 | menos de 1 min |
+| `python scripts/make_visa_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | gráficos do VisA | menos de 1 min |
+| `python scripts/make_visa_photo_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | Figuras 4, 11 e 15 | uns 15 min |
 
-**4. Web interface** (train, set the margin, inspect, see the VRAM in use)
+Os três scripts de figura (`make_figures.py`, `make_visa_figures.py` e `make_visa_photo_figures.py`) geram as figuras em inglês. Com `FIG_LANG=pt` na frente do comando saem as versões em português, com final `_pt`, que são as usadas neste README.
 
-I also made a simple interface for anyone who doesn't want to use the command line:
+**4. Interface web** (treinar, ajustar a margem, inspecionar e ver a VRAM em uso)
+
+Também fiz uma interface simples para quem não quer usar a linha de comando:
 
 ```bash
 pip install gradio==5.9.1 pydantic==2.10.6
@@ -671,71 +673,71 @@ python app/demo.py          # http://127.0.0.1:7860
 
 <p align="center">
   <img src="assets/figures/demo_inspect.png" width="90%"><br>
-  <i>Figure 16. The interface inspecting a VisA board: verdict, outline, heat map and VRAM in use.</i>
+  <i>Figura 16. A interface inspecionando uma placa do VisA: veredito, contorno, mapa de calor e VRAM em uso.</i>
 </p>
 
-**5. Training on your own boards.** Organize the photos as in [data/README.md](data/README.md) and run:
+**5. Treinar nas suas placas.** Organize as fotos como em [data/README.md](data/README.md) e rode:
 
 ```bash
 python scripts/train.py --board data/board_a --out models/board_a
 ```
 
-It trains one model per ROI, prints the threshold of each one and saves everything in the output folder.
+Ele treina um modelo por ROI, mostra o limiar de cada uma e salva tudo na pasta de saída.
 
-**6. Inspecting panels**
+**6. Inspecionar painéis**
 
 ```bash
 python scripts/infer.py --models models/board_a --images data/board_a/test --out outputs/board_a --margin 1.15
 ```
 
-For each panel you get an image with every ROI framed in green or red and the defects outlined, and a file with the score and verdict of each ROI.
+Para cada painel sai uma imagem com cada ROI num quadro verde ou vermelho e os defeitos contornados, e um arquivo com a nota e o veredito de cada ROI.
 
 <p align="center">
   <img src="assets/photos/infer_output.jpg" width="100%"><br>
-  <i>Figure 17. A real inspection of Board D by the production system: approved ROIs in green and the 5 rejected ones in red, with the outline the system drew. Four of them are on the bottom edge, where the hand of whoever was holding the panel shows up in the photo. The model had never seen a hand there, so it flagged it, which is exactly the "flags what is new" from the limitations.</i>
+  <i>Figura 17. Uma inspeção real da Placa D feita pelo sistema de produção: as ROIs aprovadas em verde e as 5 reprovadas em vermelho, com o contorno que o sistema desenhou. Quatro delas ficam na borda de baixo, onde aparece a mão de quem segurava o painel na hora da foto. O modelo nunca tinha visto uma mão ali, então marcou como anomalia, que é exatamente o "marca o que é novo" das limitações.</i>
 </p>
 
 ---
 
-## 7. Repository structure
+## 7. Estrutura do repositório
 
 ```
-├── README.md / README_pt.md
+├── README.md / README_en.md
 ├── CITATION.cff
 ├── requirements.txt
 ├── src/pcbad/
-│   ├── backbone.py            loads the backbone once and lends it to every model
-│   ├── patchcore.py           the model of each ROI: memory bank and threshold
-│   ├── coreset.py             how much to keep in the memory bank
-│   ├── pipeline.py            trains a board and inspects an image
-│   ├── data.py                photo layout and ROI cropping
-│   └── visualize.py           defect outline and heat map
+│   ├── backbone.py            carrega o backbone uma vez e empresta para todos os modelos
+│   ├── patchcore.py           o modelo de cada ROI: banco de memória e limiar
+│   ├── coreset.py             quanto guardar no banco de memória
+│   ├── pipeline.py            treina uma placa e inspeciona uma imagem
+│   ├── data.py                organização das fotos e recorte das ROIs
+│   └── visualize.py           contorno do defeito e mapa de calor
 ├── scripts/
-│   ├── train.py               trains one model per ROI
-│   ├── infer.py               inspects panels
-│   ├── check_equivalence.py   checks that the shared backbone gives the same scores
-│   ├── benchmark_vram.py      measures VRAM, load time and speed
-│   ├── eval_visa.py           all the VisA experiments
-│   ├── prepare_visa_demo.py   prepares a small VisA folder ready to train
-│   ├── make_figures.py        memory charts, overview figure and animation
-│   ├── make_visa_figures.py   VisA charts
-│   ├── make_visa_photo_figures.py  figures with VisA images
-│   ├── visa_layer_examples.py block-2 heat maps
-│   ├── bootstrap_ci.py        statistical test block 2 vs block 8
-│   ├── make_photo_figures.py  builds the real-photo figures from the production photos
-│   └── hide_logo.py           hides the logo and product code on every board of a photo
-├── app/demo.py                web interface
-├── results/                   results written by the scripts
-├── assets/figures/            charts and figures
-├── assets/photos/             real panel photos (no logos)
-└── data/README.md             how to organize your own photos
+│   ├── train.py               treina um modelo por ROI
+│   ├── infer.py               inspeciona painéis
+│   ├── check_equivalence.py   confere que o backbone compartilhado dá as mesmas notas
+│   ├── benchmark_vram.py      mede VRAM, tempo de carga e velocidade
+│   ├── eval_visa.py           todos os experimentos no VisA
+│   ├── prepare_visa_demo.py   prepara uma pastinha do VisA pronta para treinar
+│   ├── make_figures.py        gráficos de memória, figura geral e animação
+│   ├── make_visa_figures.py   gráficos do VisA
+│   ├── make_visa_photo_figures.py  figuras com imagens do VisA
+│   ├── visa_layer_examples.py mapas de calor do bloco 2
+│   ├── bootstrap_ci.py        teste estatístico bloco 2 vs bloco 8
+│   ├── make_photo_figures.py  gera as figuras com foto real a partir das fotos de produção
+│   └── hide_logo.py           esconde o logo e o código do produto em todas as placas da foto
+├── app/demo.py                interface web
+├── results/                   resultados gravados pelos scripts
+├── assets/figures/            gráficos e figuras
+├── assets/photos/             fotos reais dos painéis (sem logo)
+└── data/README.md             como organizar as suas fotos
 ```
 
-This repository is a clean version of the inspection core of a much bigger in-house system. The web platform, camera control, PLC integration and operator dashboard were left out.
+Este repositório é uma versão limpa do núcleo de inspeção de um sistema interno bem maior. A plataforma web, o controle de câmera, a integração com o CLP e o painel do operador ficaram de fora.
 
 ---
 
-## 8. References
+## 8. Referências
 
 1. K. Roth, L. Pemula, J. Zepeda, B. Schölkopf, T. Brox, P. Gehler. *Towards Total Recall in Industrial Anomaly Detection.* CVPR 2022. [arXiv:2106.08265](https://arxiv.org/abs/2106.08265)
 2. S. Damm, M. Laszkiewicz, J. Lederer, A. Fischer. *AnomalyDINO: Boosting Patch-based Few-shot Anomaly Detection with DINOv2.* WACV 2025. [arXiv:2405.14529](https://arxiv.org/abs/2405.14529)
@@ -748,25 +750,25 @@ This repository is a clean version of the inspection core of a much bigger in-ho
 9. T. Defard, A. Setkov, A. Loesch, R. Audigier. *PaDiM: a Patch Distribution Modeling Framework for Anomaly Detection and Localization.* ICPR Workshops 2020. [arXiv:2011.08785](https://arxiv.org/abs/2011.08785)
 10. B. Rolih, D. Ameln, A. Vaidya, S. Akcay. *Divide and Conquer: High-Resolution Industrial Anomaly Detection via Memory Efficient Tiled Ensemble.* CVPR Workshops 2024. [arXiv:2403.04932](https://arxiv.org/abs/2403.04932)
 
-### How to cite
+### Como citar
 
 ```bibtex
 @misc{fagundes2026pcbpatchcore,
   author       = {Andrei Edio Fagundes},
-  title        = {Unsupervised Solder-Defect Detection on PCBs with PatchCore and a Shared Backbone},
+  title        = {Detecção não supervisionada de defeitos de solda em PCB com PatchCore e backbone compartilhado},
   year         = {2026},
-  howpublished = {Final project, Computer Vision Master (VC MASTER), ICA / PUC-Rio},
-  note         = {Advisor: Manoela Kohler}
+  howpublished = {Trabalho de conclusão, Visão Computacional Master (VC MASTER), ICA / PUC-Rio},
+  note         = {Orientadora: Manoela Kohler}
 }
 ```
 
-### License
+### Licença
 
-The code is under the [MIT](LICENSE) license. The panel photos in `assets/photos` are here only to illustrate the work and may not be reused, and the images that come from VisA stay under the dataset's license (CC BY 4.0).
+O código está sob a licença [MIT](LICENSE). As fotos dos painéis em `assets/photos` servem só para ilustrar o trabalho e não podem ser reutilizadas, e as imagens que vêm do VisA continuam sob a licença do dataset (CC BY 4.0).
 
-### Acknowledgments
+### Agradecimentos
 
-Thanks to Prof. Manoela Kohler for the guidance, to the ICA / PUC-Rio team, and to the people on the production line and in test engineering who collected panels, marked defects and were patient with the false alarms of the first versions.
+Obrigado à professora Manoela Kohler pela orientação, à equipe do ICA / PUC-Rio e ao pessoal da linha de produção e da engenharia de testes, que separou painel, marcou defeito e teve paciência com os falsos defeitos das primeiras versões.
 
 ---
 
