@@ -23,6 +23,8 @@ data/<board>/
 }
 ```
 
+With `rois.json`, training also builds the solder map (`solder_map.png`, saved next to the models) from the same good photos. At inspection, a ROI above the limit whose anomaly does not touch any solder joint is reported as "away from solder" and does not fail the panel. Without the map (or in whole-image mode), every ROI above the limit fails. See `src/pcbad/solder.py`.
+
 Tips:
 
 - Every photo must come from the same camera position and lighting. If the panel moves between shots, align the photos to a reference first (for example with `cv2.phaseCorrelate`); a shift of a few pixels is enough to raise the score of a good ROI.

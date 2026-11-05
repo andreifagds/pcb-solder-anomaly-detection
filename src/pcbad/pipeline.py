@@ -4,6 +4,9 @@ Two modes, chosen by the presence of `rois.json` in the board folder:
   * ROI mode    : one model per ROI listed in rois.json (the production setup)
   * whole image : no rois.json -> each image is one region (handy for public
                   datasets such as VisA, where every image is a single board)
+
+In ROI mode, training also builds the solder map (see solder.py) and saves it next to the
+models as solder_map.png; inspection then ignores anomalies that are away from any solder.
 """
 
 from __future__ import annotations
@@ -20,6 +23,9 @@ import torch
 from .backbone import BACKBONES
 from .data import crop, list_images, load_rois, read_rgb
 from .patchcore import RoiPatchCore, preprocess
+from .solder import build_map, load_map, near_solder, save_map
+
+SOLDER_MAP = "solder_map.png"
 from .visualize import heatmap, outline
 
 WHOLE = "whole_image"
@@ -76,6 +82,9 @@ def train_board(
             "seconds": round(time.perf_counter() - t, 1),
         }
         log(f"  {r}: bank {m.meta['bank_shape']}, threshold {m.threshold:.3f}")
+    if rois[next(iter(rois))] is not None:  # ROI mode: map of where the solder is, from the same photos
+        log("building the solder map")
+        save_map(build_map(read_rgb(p) for p in panels), out_dir / SOLDER_MAP)
     summary["total_seconds"] = round(time.perf_counter() - t0, 1)
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     return summary
@@ -90,9 +99,18 @@ def load_models(models_dir: str | Path, device: str | None = None) -> dict[str, 
     return models
 
 
+def load_solder_map(models_dir: str | Path) -> np.ndarray | None:
+    """The solder map saved by train_board, or None (then every flagged ROI is a defect)."""
+    return load_map(Path(models_dir) / SOLDER_MAP)
+
+
 @torch.inference_mode()
-def inspect(models: dict[str, RoiPatchCore], img: np.ndarray, margin: float = 1.15):
-    """-> (annotated image, report dict, list of (roi, outlined crop, heat map crop) for flagged ROIs)."""
+def inspect(models: dict[str, RoiPatchCore], img: np.ndarray, margin: float = 1.15,
+            solder_zone: np.ndarray | None = None):
+    """-> (annotated image, report dict, list of (roi, outlined crop, heat map crop) for flagged ROIs).
+
+    With a solder map, a ROI above the limit whose anomaly does not touch any solder is reported
+    with "away_from_solder": True and does not count as a defect (gray frame)."""
     any_m = next(iter(models.values()))
     s = BACKBONES[any_m.backbone_key].input_size
     canvas = img.copy()
@@ -102,16 +120,22 @@ def inspect(models: dict[str, RoiPatchCore], img: np.ndarray, margin: float = 1.
         xy, size = m.meta.get("roi_xy"), m.meta.get("roi_size")
         c = _cut(img, None if xy is None else tuple(xy), size)
         pred = m.predict(preprocess(c, s).to(m.device), margin=margin)[0]
-        report[r] = {"score": round(pred.score, 3), "defect": pred.is_defect}
         x, y = (0, 0) if xy is None else xy
         h, w = c.shape[:2]
-        if pred.is_defect:
+        defect, away = pred.is_defect, False
+        if defect:
             amap = cv2.resize(pred.anomaly_map, (w, h))
             limit = m.threshold * margin
-            marked = outline(c, amap, min_level=limit)
-            canvas[y : y + h, x : x + w] = marked
-            flagged.append((r, marked, heatmap(c, amap, vmax=float(amap.max()))))
+            if solder_zone is not None and xy is not None:
+                zone = solder_zone[y : y + h, x : x + w]
+                if zone.shape == amap.shape and not near_solder(zone, amap >= limit):
+                    defect, away = False, True
+            if defect:
+                marked = outline(c, amap, min_level=limit)
+                canvas[y : y + h, x : x + w] = marked
+                flagged.append((r, marked, heatmap(c, amap, vmax=float(amap.max()))))
+        report[r] = {"score": round(pred.score, 3), "defect": defect, "away_from_solder": away}
         if xy is not None:
-            color = (220, 40, 40) if pred.is_defect else (40, 180, 40)
+            color = (220, 40, 40) if defect else (150, 150, 150) if away else (40, 180, 40)
             cv2.rectangle(canvas, (x, y), (x + w, y + h), color, thick)
     return canvas, report, flagged
