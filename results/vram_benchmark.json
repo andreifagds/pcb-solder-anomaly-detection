@@ -1,0 +1,277 @@
+{
+  "gpu": "NVIDIA RTX 1000 Ada Generation Laptop GPU",
+  "gpu_total_mb": 6140.5625,
+  "budget_mb": 5219.478125,
+  "torch": "2.5.1+cu121",
+  "crops_per_roi": 80,
+  "coreset_ratio": 0.0790569415042095,
+  "backbones": {
+    "wide_resnet50": {
+      "label": "WideResNet-50 (layer2)",
+      "input_size": 320,
+      "grid": 40,
+      "feature_dim": 512,
+      "bank_rows": 10119,
+      "bank_mb": 19.763671875,
+      "backbone_mb": 15.8037109375,
+      "asymptotic_saving": 0.4443315669531314,
+      "runs": [
+        {
+          "n": 1,
+          "shared_resident_mb": 35.8046875,
+          "shared_peak_mb": 171.10009765625,
+          "shared_ms": 13.438500001939246,
+          "dedicated_resident_mb": 35.80810546875,
+          "dedicated_peak_mb": 162.978515625,
+          "dedicated_ms": 41.8935000016063,
+          "dedicated_measured": true,
+          "saving": 9.545237608232782e-05
+        },
+        {
+          "n": 5,
+          "shared_resident_mb": 115.80859375,
+          "shared_peak_mb": 242.97900390625,
+          "shared_ms": 15.116719999787165,
+          "dedicated_resident_mb": 180.49365234375,
+          "dedicated_peak_mb": 307.6640625,
+          "dedicated_ms": 40.384220000123605,
+          "dedicated_measured": true,
+          "saving": 0.35837857871343515
+        },
+        {
+          "n": 10,
+          "shared_resident_mb": 215.8134765625,
+          "shared_peak_mb": 342.98388671875,
+          "shared_ms": 15.08047000024817,
+          "dedicated_resident_mb": 359.5341796875,
+          "dedicated_peak_mb": 486.70458984375,
+          "dedicated_ms": 41.067260000272654,
+          "dedicated_measured": true,
+          "saving": 0.3997414188823972
+        },
+        {
+          "n": 20,
+          "shared_resident_mb": 415.8232421875,
+          "shared_peak_mb": 542.99365234375,
+          "shared_ms": 14.921864999996615,
+          "dedicated_resident_mb": 717.615234375,
+          "dedicated_peak_mb": 844.78564453125,
+          "dedicated_ms": 42.384524999943096,
+          "dedicated_measured": true,
+          "saving": 0.4205484746297824
+        },
+        {
+          "n": 40,
+          "shared_resident_mb": 815.8427734375,
+          "shared_peak_mb": 943.01318359375,
+          "shared_ms": 14.92487000004985,
+          "dedicated_resident_mb": 1433.77734375,
+          "dedicated_peak_mb": 1560.94775390625,
+          "dedicated_ms": 41.42891999999847,
+          "dedicated_measured": true,
+          "saving": 0.43098363424847497
+        },
+        {
+          "n": 80,
+          "shared_resident_mb": 1615.8818359375,
+          "shared_peak_mb": 1743.05224609375,
+          "shared_ms": 15.030603750028604,
+          "dedicated_resident_mb": 2866.1015625,
+          "dedicated_peak_mb": 2993.27197265625,
+          "dedicated_ms": 42.49952125001073,
+          "dedicated_measured": true,
+          "saving": 0.4362091500595593
+        },
+        {
+          "n": 130,
+          "shared_resident_mb": 2615.9306640625,
+          "shared_peak_mb": 2743.10107421875,
+          "shared_ms": 15.470768461538963,
+          "dedicated_resident_mb": 4656.5068359375,
+          "dedicated_peak_mb": 4783.67724609375,
+          "dedicated_ms": 39.31664769230478,
+          "dedicated_measured": true,
+          "saving": 0.43822037500867717
+        }
+      ],
+      "full_ckpt_mb": 35.60407638549805,
+      "lean_ckpt_mb": 19.764843940734863,
+      "load_full_s": 0.9823671000012837,
+      "load_lean_s": 0.008682599996973295
+    },
+    "dinov2_vits14": {
+      "label": "DINOv2 ViT-S/14",
+      "input_size": 518,
+      "grid": 37,
+      "feature_dim": 384,
+      "bank_rows": 8658,
+      "bank_mb": 12.6826171875,
+      "backbone_mb": 64.7607421875,
+      "asymptotic_saving": 0.8362336384958765,
+      "runs": [
+        {
+          "n": 1,
+          "shared_resident_mb": 78.06103515625,
+          "shared_peak_mb": 172.10498046875,
+          "shared_ms": 75.6145999985165,
+          "dedicated_resident_mb": 78.064453125,
+          "dedicated_peak_mb": 178.140625,
+          "dedicated_ms": 126.58200000078068,
+          "dedicated_measured": true,
+          "saving": 4.378393254766966e-05
+        },
+        {
+          "n": 5,
+          "shared_resident_mb": 128.79541015625,
+          "shared_peak_mb": 222.83935546875,
+          "shared_ms": 45.73030000028666,
+          "dedicated_resident_mb": 384.10546875,
+          "dedicated_peak_mb": 484.181640625,
+          "dedicated_ms": 133.70705999986967,
+          "dedicated_measured": true,
+          "saving": 0.664687382412464
+        },
+        {
+          "n": 10,
+          "shared_resident_mb": 192.21337890625,
+          "shared_peak_mb": 286.25732421875,
+          "shared_ms": 41.89473000005819,
+          "dedicated_resident_mb": 766.65673828125,
+          "dedicated_peak_mb": 866.73291015625,
+          "dedicated_ms": 129.80888999991294,
+          "dedicated_measured": true,
+          "saving": 0.7492836502850432
+        },
+        {
+          "n": 20,
+          "shared_resident_mb": 319.04931640625,
+          "shared_peak_mb": 413.09326171875,
+          "shared_ms": 43.35231500008376,
+          "dedicated_resident_mb": 1531.75927734375,
+          "dedicated_peak_mb": 1631.83544921875,
+          "dedicated_ms": 126.22577000001911,
+          "dedicated_measured": true,
+          "saving": 0.791710537598624
+        },
+        {
+          "n": 40,
+          "shared_resident_mb": 572.72119140625,
+          "shared_peak_mb": 666.76513671875,
+          "shared_ms": 42.929000000003725,
+          "dedicated_resident_mb": 3061.96435546875,
+          "dedicated_peak_mb": 3162.04052734375,
+          "dedicated_ms": 109.18598999996902,
+          "dedicated_measured": true,
+          "saving": 0.8129562839673967
+        },
+        {
+          "n": 80,
+          "shared_resident_mb": 1080.06494140625,
+          "shared_peak_mb": 1174.10888671875,
+          "shared_ms": 39.38872375001665,
+          "dedicated_resident_mb": 6123.9287109375,
+          "dedicated_measured": false,
+          "saving": 0.8236320191844779
+        },
+        {
+          "n": 130,
+          "shared_resident_mb": 1714.24462890625,
+          "shared_peak_mb": 1808.28857421875,
+          "shared_ms": 37.41705461537864,
+          "dedicated_resident_mb": 9951.384155273438,
+          "dedicated_measured": false,
+          "saving": 0.8277380711910476
+        }
+      ],
+      "full_ckpt_mb": 76.56129169464111,
+      "lean_ckpt_mb": 12.683789253234863,
+      "load_full_s": 0.3553984999998647,
+      "load_lean_s": 0.00646259999848553
+    },
+    "dinov2_vitb14": {
+      "label": "DINOv2 ViT-B/14",
+      "input_size": 518,
+      "grid": 37,
+      "feature_dim": 768,
+      "bank_rows": 8658,
+      "bank_mb": 25.365234375,
+      "backbone_mb": 250.0107421875,
+      "asymptotic_saving": 0.9078887174849726,
+      "runs": [
+        {
+          "n": 1,
+          "shared_resident_mb": 275.38671875,
+          "shared_peak_mb": 371.43603515625,
+          "shared_ms": 90.28440000111004,
+          "dedicated_resident_mb": 275.39013671875,
+          "dedicated_peak_mb": 472.60791015625,
+          "dedicated_ms": 185.33059999754187,
+          "dedicated_measured": true,
+          "saving": 1.2411369523679383e-05
+        },
+        {
+          "n": 5,
+          "shared_resident_mb": 379.390625,
+          "shared_peak_mb": 475.43994140625,
+          "shared_ms": 91.15149999997811,
+          "dedicated_resident_mb": 1377.79638671875,
+          "dedicated_peak_mb": 1575.01416015625,
+          "dedicated_ms": 183.67839999991702,
+          "dedicated_measured": true,
+          "saving": 0.7246395558464728
+        },
+        {
+          "n": 10,
+          "shared_resident_mb": 509.3955078125,
+          "shared_peak_mb": 605.44482421875,
+          "shared_ms": 92.03114000010828,
+          "dedicated_resident_mb": 2756.1337890625,
+          "dedicated_peak_mb": 2953.126953125,
+          "dedicated_ms": 190.64765000002808,
+          "dedicated_measured": true,
+          "saving": 0.8151775106731045
+        },
+        {
+          "n": 20,
+          "shared_resident_mb": 769.4052734375,
+          "shared_peak_mb": 865.45458984375,
+          "shared_ms": 97.7600899999743,
+          "dedicated_resident_mb": 5512.267578125,
+          "dedicated_measured": false,
+          "saving": 0.8604194621300998
+        },
+        {
+          "n": 40,
+          "shared_resident_mb": 1289.4248046875,
+          "shared_peak_mb": 1385.47412109375,
+          "shared_ms": 84.16849999994156,
+          "dedicated_resident_mb": 11024.53515625,
+          "dedicated_measured": false,
+          "saving": 0.8830404378585973
+        },
+        {
+          "n": 80,
+          "shared_resident_mb": 2329.4638671875,
+          "shared_peak_mb": 2425.51318359375,
+          "shared_ms": 89.87939999997252,
+          "dedicated_resident_mb": 22049.0703125,
+          "dedicated_measured": false,
+          "saving": 0.8943509257228461
+        },
+        {
+          "n": 130,
+          "shared_resident_mb": 3629.5126953125,
+          "shared_peak_mb": 3725.56201171875,
+          "shared_ms": 90.2931607692433,
+          "dedicated_resident_mb": 35829.7392578125,
+          "dedicated_measured": false,
+          "saving": 0.8987011133629419
+        }
+      ],
+      "full_ckpt_mb": 274.5671510696411,
+      "lean_ckpt_mb": 25.366406440734863,
+      "load_full_s": 1.5378930000006221,
+      "load_lean_s": 0.018012699998507742
+    }
+  }
+}

@@ -1,0 +1,819 @@
+{
+  "setup": {
+    "dataset": "VisA (pcb1-pcb4), 1cls split",
+    "n_train_per_category": 100,
+    "seed": 42,
+    "margin": 1.15,
+    "threshold": "leave-one-out, quantile 0.90",
+    "pixel_auroc_resolution": 256,
+    "gpu": "NVIDIA RTX 1000 Ada Generation Laptop GPU"
+  },
+  "main": {
+    "wide_resnet50": {
+      "pcb1": {
+        "image_auroc": 0.955,
+        "pixel_auroc": 0.9949980809307979,
+        "recall": 0.66,
+        "false_alarm_rate": 0.03,
+        "threshold": 27.460384941101083,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "seconds": 105.2
+      },
+      "pcb2": {
+        "image_auroc": 0.9208,
+        "pixel_auroc": 0.9782397361908289,
+        "recall": 0.61,
+        "false_alarm_rate": 0.03,
+        "threshold": 26.962870979309084,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "seconds": 85.8
+      },
+      "pcb3": {
+        "image_auroc": 0.9334653465346534,
+        "pixel_auroc": 0.9895796297907867,
+        "recall": 0.54,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 28.462245750427247,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "seconds": 69.0
+      },
+      "pcb4": {
+        "image_auroc": 0.9934653465346535,
+        "pixel_auroc": 0.9835505740781861,
+        "recall": 0.91,
+        "false_alarm_rate": 0.039603960396039604,
+        "threshold": 25.759491348266604,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "seconds": 86.3
+      }
+    },
+    "dinov2_vits14": {
+      "pcb1": {
+        "image_auroc": 0.8028,
+        "pixel_auroc": 0.9925832615345312,
+        "recall": 0.22,
+        "false_alarm_rate": 0.04,
+        "threshold": 3.3251987218856813,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "seconds": 96.4
+      },
+      "pcb2": {
+        "image_auroc": 0.8132,
+        "pixel_auroc": 0.971384854142674,
+        "recall": 0.23,
+        "false_alarm_rate": 0.05,
+        "threshold": 3.207926106452942,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "seconds": 94.3
+      },
+      "pcb3": {
+        "image_auroc": 0.7670297029702969,
+        "pixel_auroc": 0.9506517339791851,
+        "recall": 0.08,
+        "false_alarm_rate": 0.0,
+        "threshold": 3.680658507347107,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "seconds": 163.5
+      },
+      "pcb4": {
+        "image_auroc": 0.8492079207920792,
+        "pixel_auroc": 0.971762509477193,
+        "recall": 0.17,
+        "false_alarm_rate": 0.06930693069306931,
+        "threshold": 3.2892749547958386,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "seconds": 155.8
+      }
+    },
+    "dinov2_vitb14": {
+      "pcb1": {
+        "image_auroc": 0.7948999999999999,
+        "pixel_auroc": 0.9934172435982598,
+        "recall": 0.1,
+        "false_alarm_rate": 0.05,
+        "threshold": 10.055148887634278,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "seconds": 152.9
+      },
+      "pcb2": {
+        "image_auroc": 0.7961999999999999,
+        "pixel_auroc": 0.9743190501452654,
+        "recall": 0.17,
+        "false_alarm_rate": 0.06,
+        "threshold": 9.737015628814698,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "seconds": 228.6
+      },
+      "pcb3": {
+        "image_auroc": 0.7427722772277228,
+        "pixel_auroc": 0.9621314202749662,
+        "recall": 0.07,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 10.562494468688966,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "seconds": 1080.2
+      },
+      "pcb4": {
+        "image_auroc": 0.8144554455445545,
+        "pixel_auroc": 0.9729949835228296,
+        "recall": 0.1,
+        "false_alarm_rate": 0.06930693069306931,
+        "threshold": 10.302571773529055,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "seconds": 60.8
+      }
+    },
+    "wide_resnet50_l23": {
+      "pcb1": {
+        "image_auroc": 0.9225,
+        "pixel_auroc": 0.9970125740273355,
+        "recall": 0.57,
+        "false_alarm_rate": 0.06,
+        "threshold": 36.03806991577149,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.8699,
+        "pixel_auroc": 0.9847450685752684,
+        "recall": 0.5,
+        "false_alarm_rate": 0.05,
+        "threshold": 36.171263504028325,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.9076237623762377,
+        "pixel_auroc": 0.9823559086137653,
+        "recall": 0.32,
+        "false_alarm_rate": 0.0,
+        "threshold": 41.50768470764161,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.986039603960396,
+        "pixel_auroc": 0.987774963663199,
+        "recall": 0.94,
+        "false_alarm_rate": 0.0297029702970297,
+        "threshold": 32.72368125915528,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    }
+  },
+  "layers": {
+    "blocks.2": {
+      "pcb1": {
+        "image_auroc": 0.9091,
+        "pixel_auroc": 0.9909787299519273,
+        "recall": 0.3,
+        "false_alarm_rate": 0.01,
+        "threshold": 1.0057218551635743,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.9057,
+        "pixel_auroc": 0.981984934301197,
+        "recall": 0.5,
+        "false_alarm_rate": 0.01,
+        "threshold": 0.9270664274692535,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.9257425742574257,
+        "pixel_auroc": 0.9815108217146835,
+        "recall": 0.34,
+        "false_alarm_rate": 0.0,
+        "threshold": 0.9809674441814423,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.9902970297029703,
+        "pixel_auroc": 0.983211647995891,
+        "recall": 0.65,
+        "false_alarm_rate": 0.0,
+        "threshold": 0.9642399728298188,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    },
+    "blocks.5": {
+      "pcb1": {
+        "image_auroc": 0.8427999999999999,
+        "pixel_auroc": 0.9933468995011503,
+        "recall": 0.34,
+        "false_alarm_rate": 0.05,
+        "threshold": 2.201584029197693,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.8505999999999999,
+        "pixel_auroc": 0.9790767745159271,
+        "recall": 0.28,
+        "false_alarm_rate": 0.04,
+        "threshold": 2.2618986129760743,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.801089108910891,
+        "pixel_auroc": 0.971077887458502,
+        "recall": 0.16,
+        "false_alarm_rate": 0.019801980198019802,
+        "threshold": 2.354865646362305,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.9755445544554455,
+        "pixel_auroc": 0.9898125402095546,
+        "recall": 0.72,
+        "false_alarm_rate": 0.019801980198019802,
+        "threshold": 2.048205852508545,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    },
+    "blocks.8": {
+      "pcb1": {
+        "image_auroc": 0.7913,
+        "pixel_auroc": 0.99369985947891,
+        "recall": 0.07,
+        "false_alarm_rate": 0.05,
+        "threshold": 10.261936950683594,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.7875,
+        "pixel_auroc": 0.9730381333050672,
+        "recall": 0.17,
+        "false_alarm_rate": 0.06,
+        "threshold": 9.664996528625489,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.7573267326732673,
+        "pixel_auroc": 0.9611494894193771,
+        "recall": 0.07,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 10.646979045867921,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.810891089108911,
+        "pixel_auroc": 0.9711780890413664,
+        "recall": 0.09,
+        "false_alarm_rate": 0.04950495049504951,
+        "threshold": 10.327491664886477,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    },
+    "blocks.11": {
+      "pcb1": {
+        "image_auroc": 0.8985,
+        "pixel_auroc": 0.9963180552856944,
+        "recall": 0.57,
+        "false_alarm_rate": 0.06,
+        "threshold": 43.39761734008789,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.8824,
+        "pixel_auroc": 0.9765388249838891,
+        "recall": 0.45,
+        "false_alarm_rate": 0.05,
+        "threshold": 43.267421340942384,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.9089108910891089,
+        "pixel_auroc": 0.9824730088935648,
+        "recall": 0.44,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 44.859168243408206,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.925049504950495,
+        "pixel_auroc": 0.9843148046332785,
+        "recall": 0.52,
+        "false_alarm_rate": 0.04950495049504951,
+        "threshold": 43.29145774841309,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    }
+  },
+  "neighbors": {
+    "pcb1": {
+      "1": 0.7955,
+      "3": 0.7301,
+      "9": 0.7878000000000001
+    },
+    "pcb2": {
+      "1": 0.8040999999999999,
+      "3": 0.7262000000000001,
+      "9": 0.7904
+    },
+    "pcb3": {
+      "1": 0.7531683168316831,
+      "3": 0.7017821782178217,
+      "9": 0.7418811881188119
+    },
+    "pcb4": {
+      "1": 0.8363366336633664,
+      "3": 0.7347524752475247,
+      "9": 0.8217821782178217
+    }
+  },
+  "coreset": {
+    "pcb1": {
+      "0.01": {
+        "image_auroc": 0.7959,
+        "pixel_auroc": 0.9886258654156811,
+        "recall": 0.07,
+        "false_alarm_rate": 0.03,
+        "threshold": 10.904856491088868,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 1369
+      },
+      "0.025": {
+        "image_auroc": 0.8069,
+        "pixel_auroc": 0.9927259501614742,
+        "recall": 0.08,
+        "false_alarm_rate": 0.05,
+        "threshold": 10.498745918273928,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 3422
+      },
+      "0.1": {
+        "image_auroc": 0.7791999999999999,
+        "pixel_auroc": 0.9936533414744351,
+        "recall": 0.06,
+        "false_alarm_rate": 0.05,
+        "threshold": 10.476826858520509,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 13690
+      },
+      "0.25": {
+        "image_auroc": 0.7851999999999999,
+        "pixel_auroc": 0.9935279655743464,
+        "recall": 0.11,
+        "false_alarm_rate": 0.05,
+        "threshold": 9.816486835479738,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 34225
+      },
+      "1.0": {
+        "image_auroc": 0.7919999999999999,
+        "pixel_auroc": 0.9937594874336004,
+        "recall": 0.12,
+        "false_alarm_rate": 0.05,
+        "threshold": 9.460982418060302,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 136900
+      }
+    },
+    "pcb2": {
+      "0.01": {
+        "image_auroc": 0.8313999999999999,
+        "pixel_auroc": 0.962607140920477,
+        "recall": 0.13,
+        "false_alarm_rate": 0.05,
+        "threshold": 10.578020477294922,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 1369
+      },
+      "0.025": {
+        "image_auroc": 0.8049000000000001,
+        "pixel_auroc": 0.9687267068130992,
+        "recall": 0.2,
+        "false_alarm_rate": 0.06,
+        "threshold": 9.891239261627199,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 3422
+      },
+      "0.1": {
+        "image_auroc": 0.7879999999999999,
+        "pixel_auroc": 0.9741969580464129,
+        "recall": 0.19,
+        "false_alarm_rate": 0.06,
+        "threshold": 9.727515983581544,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 13690
+      },
+      "0.25": {
+        "image_auroc": 0.7878000000000001,
+        "pixel_auroc": 0.9740823553139926,
+        "recall": 0.15,
+        "false_alarm_rate": 0.05,
+        "threshold": 9.643920040130617,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 34225
+      },
+      "1.0": {
+        "image_auroc": 0.7997000000000001,
+        "pixel_auroc": 0.9722649779768859,
+        "recall": 0.19,
+        "false_alarm_rate": 0.05,
+        "threshold": 9.259187030792237,
+        "n_test_good": 100,
+        "n_test_defect": 100,
+        "bank_rows": 136900
+      }
+    },
+    "pcb3": {
+      "0.01": {
+        "image_auroc": 0.7840594059405941,
+        "pixel_auroc": 0.9482196879106717,
+        "recall": 0.07,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 11.137738895416259,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 1369
+      },
+      "0.025": {
+        "image_auroc": 0.7648514851485149,
+        "pixel_auroc": 0.9555341613117434,
+        "recall": 0.09,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 10.794798946380615,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 3422
+      },
+      "0.1": {
+        "image_auroc": 0.7408910891089109,
+        "pixel_auroc": 0.9610727430248251,
+        "recall": 0.06,
+        "false_alarm_rate": 0.0,
+        "threshold": 10.52697696685791,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 13690
+      },
+      "0.25": {
+        "image_auroc": 0.7418811881188119,
+        "pixel_auroc": 0.9576622548181487,
+        "recall": 0.06,
+        "false_alarm_rate": 0.0,
+        "threshold": 10.35306510925293,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 34225
+      },
+      "1.0": {
+        "image_auroc": 0.7388118811881188,
+        "pixel_auroc": 0.9578506822087108,
+        "recall": 0.07,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 9.993572616577149,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 136900
+      }
+    },
+    "pcb4": {
+      "0.01": {
+        "image_auroc": 0.8375247524752475,
+        "pixel_auroc": 0.9400816213219036,
+        "recall": 0.11,
+        "false_alarm_rate": 0.06930693069306931,
+        "threshold": 10.43714599609375,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 1369
+      },
+      "0.025": {
+        "image_auroc": 0.8331683168316831,
+        "pixel_auroc": 0.9678005449635014,
+        "recall": 0.1,
+        "false_alarm_rate": 0.0297029702970297,
+        "threshold": 10.428521919250489,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 3422
+      },
+      "0.1": {
+        "image_auroc": 0.8087128712871288,
+        "pixel_auroc": 0.9714530065133442,
+        "recall": 0.1,
+        "false_alarm_rate": 0.0297029702970297,
+        "threshold": 10.230559253692627,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 13690
+      },
+      "0.25": {
+        "image_auroc": 0.8,
+        "pixel_auroc": 0.970888500222174,
+        "recall": 0.09,
+        "false_alarm_rate": 0.0594059405940594,
+        "threshold": 10.083632755279542,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 34225
+      },
+      "1.0": {
+        "image_auroc": 0.8264356435643564,
+        "pixel_auroc": 0.9720625132539541,
+        "recall": 0.14,
+        "false_alarm_rate": 0.0594059405940594,
+        "threshold": 9.581082057952882,
+        "n_test_good": 101,
+        "n_test_defect": 100,
+        "bank_rows": 136900
+      }
+    }
+  },
+  "pooled": {
+    "bank_rows": 19360,
+    "per_category": {
+      "pcb1": {
+        "image_auroc": 0.7846000000000001,
+        "pixel_auroc": 0.9939404538312903,
+        "recall": 0.08,
+        "false_alarm_rate": 0.05,
+        "threshold": 10.162045097351077,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.8003,
+        "pixel_auroc": 0.9738017183067532,
+        "recall": 0.19,
+        "false_alarm_rate": 0.06,
+        "threshold": 9.650611591339112,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.7482178217821782,
+        "pixel_auroc": 0.9621816292098192,
+        "recall": 0.05,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 10.652013778686525,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.8176237623762376,
+        "pixel_auroc": 0.9714815683999878,
+        "recall": 0.1,
+        "false_alarm_rate": 0.06930693069306931,
+        "threshold": 10.091452407836915,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    },
+    "pooled": {
+      "pcb1": {
+        "image_auroc": 0.789,
+        "pixel_auroc": 0.9927135271370727,
+        "recall": 0.08,
+        "false_alarm_rate": 0.04,
+        "threshold": 10.292891407012942,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.8187000000000001,
+        "pixel_auroc": 0.9713933248361221,
+        "recall": 0.11,
+        "false_alarm_rate": 0.04,
+        "threshold": 10.292891407012942,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.7413861386138614,
+        "pixel_auroc": 0.9612683380070038,
+        "recall": 0.14,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 10.292891407012942,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.8202970297029702,
+        "pixel_auroc": 0.9670726428581898,
+        "recall": 0.09,
+        "false_alarm_rate": 0.04950495049504951,
+        "threshold": 10.292891407012942,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    }
+  },
+  "mosaic": {
+    "1": {
+      "pcb1": {
+        "image_auroc": 0.7907,
+        "recall": 0.11,
+        "false_alarm_rate": 0.05,
+        "threshold": 10.082459735870364,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.7917,
+        "recall": 0.19,
+        "false_alarm_rate": 0.06,
+        "threshold": 9.748176097869873,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.7665346534653465,
+        "recall": 0.03,
+        "false_alarm_rate": 0.0,
+        "threshold": 10.756421852111817,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.8166336633663367,
+        "recall": 0.09,
+        "false_alarm_rate": 0.0594059405940594,
+        "threshold": 10.276884460449219,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    },
+    "2": {
+      "pcb1": {
+        "image_auroc": 0.7227,
+        "recall": 0.09,
+        "false_alarm_rate": 0.01,
+        "threshold": 9.040513229370118,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.6612,
+        "recall": 0.12,
+        "false_alarm_rate": 0.05,
+        "threshold": 8.523723793029786,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.7631683168316832,
+        "recall": 0.09,
+        "false_alarm_rate": 0.0297029702970297,
+        "threshold": 9.108666706085206,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.5622772277227723,
+        "recall": 0.04,
+        "false_alarm_rate": 0.04950495049504951,
+        "threshold": 9.411319541931153,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    },
+    "3": {
+      "pcb1": {
+        "image_auroc": 0.6062000000000001,
+        "recall": 0.06,
+        "false_alarm_rate": 0.02,
+        "threshold": 8.066574859619141,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.7923000000000001,
+        "recall": 0.17,
+        "false_alarm_rate": 0.02,
+        "threshold": 7.647722387313843,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.6898019801980197,
+        "recall": 0.19,
+        "false_alarm_rate": 0.019801980198019802,
+        "threshold": 7.962518501281739,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.5791089108910891,
+        "recall": 0.0,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 9.239485263824463,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    },
+    "4": {
+      "pcb1": {
+        "image_auroc": 0.5033,
+        "recall": 0.02,
+        "false_alarm_rate": 0.0,
+        "threshold": 7.666309881210328,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb2": {
+        "image_auroc": 0.8532,
+        "recall": 0.26,
+        "false_alarm_rate": 0.01,
+        "threshold": 7.16429557800293,
+        "n_test_good": 100,
+        "n_test_defect": 100
+      },
+      "pcb3": {
+        "image_auroc": 0.6340594059405941,
+        "recall": 0.11,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 7.506126117706299,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      },
+      "pcb4": {
+        "image_auroc": 0.623960396039604,
+        "recall": 0.01,
+        "false_alarm_rate": 0.009900990099009901,
+        "threshold": 8.322646999359131,
+        "n_test_good": 101,
+        "n_test_defect": 100
+      }
+    }
+  },
+  "total_minutes": 14.9,
+  "cosine": {
+    "pcb1": {
+      "image_auroc": 0.8627,
+      "pixel_auroc": 0.9963756626728699,
+      "recall": 0.21,
+      "false_alarm_rate": 0.04,
+      "threshold": 0.5853656888008117,
+      "n_test_good": 100,
+      "n_test_defect": 100
+    },
+    "pcb2": {
+      "image_auroc": 0.8653,
+      "pixel_auroc": 0.98318564315248,
+      "recall": 0.28,
+      "false_alarm_rate": 0.05,
+      "threshold": 0.5927358984947204,
+      "n_test_good": 100,
+      "n_test_defect": 100
+    },
+    "pcb3": {
+      "image_auroc": 0.9056435643564357,
+      "pixel_auroc": 0.981017538665495,
+      "recall": 0.27,
+      "false_alarm_rate": 0.009900990099009901,
+      "threshold": 0.558560973405838,
+      "n_test_good": 101,
+      "n_test_defect": 100
+    },
+    "pcb4": {
+      "image_auroc": 0.9288118811881187,
+      "pixel_auroc": 0.9806456411297036,
+      "recall": 0.49,
+      "false_alarm_rate": 0.0297029702970297,
+      "threshold": 0.5680547416210175,
+      "n_test_good": 101,
+      "n_test_defect": 100
+    }
+  }
+}

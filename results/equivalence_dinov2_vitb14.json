@@ -1,0 +1,9 @@
+{
+  "backbone": "DINOv2 ViT-B/14",
+  "max_abs_score_diff": 7.867813110351562e-05,
+  "max_rel_score_diff": 1.0171079338761047e-05,
+  "max_abs_map_diff": 0.001972675323486328,
+  "map_range": 7.909228801727295,
+  "backbone_weight_max_diff": 0.0,
+  "n_backbone_tensors": 131
+}

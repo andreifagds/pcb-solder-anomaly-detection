@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# trained models and inference outputs are generated, not versioned
+models/
+outputs/
+
+# real panel photos are not versioned (only the anonymized figures in assets/)
+data/*/
+!data/README.md
+
+# large intermediate arrays (regenerate with the scripts)
+results/*.npz

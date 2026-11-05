@@ -1,0 +1,9 @@
+{
+  "backbone": "WideResNet-50 (layer2)",
+  "max_abs_score_diff": 0.0,
+  "max_rel_score_diff": 0.0,
+  "max_abs_map_diff": 0.0046138763427734375,
+  "map_range": 16.534751892089844,
+  "backbone_weight_max_diff": 0.0,
+  "n_backbone_tensors": 144
+}

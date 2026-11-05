@@ -1,0 +1,26 @@
+{
+  "blocks.2": {
+    "backbone_mb": 87.2,
+    "params_m": 22.8,
+    "bank_mb": 25.4,
+    "limit_saving": 0.775
+  },
+  "blocks.5": {
+    "backbone_mb": 168.3,
+    "params_m": 44.0,
+    "bank_mb": 25.4,
+    "limit_saving": 0.869
+  },
+  "blocks.8": {
+    "backbone_mb": 249.4,
+    "params_m": 65.3,
+    "bank_mb": 25.4,
+    "limit_saving": 0.908
+  },
+  "blocks.11": {
+    "backbone_mb": 330.6,
+    "params_m": 86.6,
+    "bank_mb": 25.4,
+    "limit_saving": 0.929
+  }
+}

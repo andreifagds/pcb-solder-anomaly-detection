@@ -1,0 +1,74 @@
+loaded in 21s: {'pcb1': (100, 200), 'pcb2': (100, 200), 'pcb3': (100, 201), 'pcb4': (100, 201)}
+[main] wide_resnet50   pcb1: img 0.955 pix 0.995 recall 0.66 FA 0.03
+[main] wide_resnet50   pcb2: img 0.921 pix 0.978 recall 0.61 FA 0.03
+[main] wide_resnet50   pcb3: img 0.933 pix 0.990 recall 0.54 FA 0.01
+[main] wide_resnet50   pcb4: img 0.993 pix 0.984 recall 0.91 FA 0.04
+[main] dinov2_vits14   pcb1: img 0.803 pix 0.993 recall 0.22 FA 0.04
+[main] dinov2_vits14   pcb2: img 0.813 pix 0.971 recall 0.23 FA 0.05
+[main] dinov2_vits14   pcb3: img 0.767 pix 0.951 recall 0.08 FA 0.00
+[main] dinov2_vits14   pcb4: img 0.849 pix 0.972 recall 0.17 FA 0.07
+[main] dinov2_vitb14   pcb1: img 0.795 pix 0.993 recall 0.10 FA 0.05
+[main] dinov2_vitb14   pcb2: img 0.796 pix 0.974 recall 0.17 FA 0.06
+[main] dinov2_vitb14   pcb3: img 0.743 pix 0.962 recall 0.07 FA 0.01
+[main] dinov2_vitb14   pcb4: img 0.814 pix 0.973 recall 0.10 FA 0.07
+[layers] blocks.2: pcb1 img 0.909 pix 0.991
+[layers] blocks.2: pcb2 img 0.906 pix 0.982
+[layers] blocks.2: pcb3 img 0.926 pix 0.982
+[layers] blocks.2: pcb4 img 0.990 pix 0.983
+[layers] blocks.5: pcb1 img 0.843 pix 0.993
+[layers] blocks.5: pcb2 img 0.851 pix 0.979
+[layers] blocks.5: pcb3 img 0.801 pix 0.971
+[layers] blocks.5: pcb4 img 0.976 pix 0.990
+[layers] blocks.8: pcb1 img 0.791 pix 0.994
+[layers] blocks.8: pcb2 img 0.787 pix 0.973
+[layers] blocks.8: pcb3 img 0.757 pix 0.961
+[layers] blocks.8: pcb4 img 0.811 pix 0.971
+[layers] blocks.11: pcb1 img 0.898 pix 0.996
+[layers] blocks.11: pcb2 img 0.882 pix 0.977
+[layers] blocks.11: pcb3 img 0.909 pix 0.982
+[layers] blocks.11: pcb4 img 0.925 pix 0.984
+[neighbors] pcb1: {'1': 0.7955, '3': 0.7301, '9': 0.7878000000000001}
+[coreset] pcb1 r=0.01: rows 1369 img 0.796
+[coreset] pcb1 r=0.025: rows 3422 img 0.807
+[coreset] pcb1 r=0.1: rows 13690 img 0.779
+[coreset] pcb1 r=0.25: rows 34225 img 0.785
+[coreset] pcb1 r=1.0: rows 136900 img 0.792
+[pooled] pcb1: own 0.785 pooled 0.789
+[neighbors] pcb2: {'1': 0.8040999999999999, '3': 0.7262000000000001, '9': 0.7904}
+[coreset] pcb2 r=0.01: rows 1369 img 0.831
+[coreset] pcb2 r=0.025: rows 3422 img 0.805
+[coreset] pcb2 r=0.1: rows 13690 img 0.788
+[coreset] pcb2 r=0.25: rows 34225 img 0.788
+[coreset] pcb2 r=1.0: rows 136900 img 0.800
+[pooled] pcb2: own 0.800 pooled 0.819
+[neighbors] pcb3: {'1': 0.7531683168316831, '3': 0.7017821782178217, '9': 0.7418811881188119}
+[coreset] pcb3 r=0.01: rows 1369 img 0.784
+[coreset] pcb3 r=0.025: rows 3422 img 0.765
+[coreset] pcb3 r=0.1: rows 13690 img 0.741
+[coreset] pcb3 r=0.25: rows 34225 img 0.742
+[coreset] pcb3 r=1.0: rows 136900 img 0.739
+[pooled] pcb3: own 0.748 pooled 0.741
+[neighbors] pcb4: {'1': 0.8363366336633664, '3': 0.7347524752475247, '9': 0.8217821782178217}
+[coreset] pcb4 r=0.01: rows 1369 img 0.838
+[coreset] pcb4 r=0.025: rows 3422 img 0.833
+[coreset] pcb4 r=0.1: rows 13690 img 0.809
+[coreset] pcb4 r=0.25: rows 34225 img 0.800
+[coreset] pcb4 r=1.0: rows 136900 img 0.826
+[pooled] pcb4: own 0.818 pooled 0.820
+[mosaic] 1x1: pcb1 img 0.791
+[mosaic] 1x1: pcb2 img 0.792
+[mosaic] 1x1: pcb3 img 0.767
+[mosaic] 1x1: pcb4 img 0.817
+[mosaic] 2x2: pcb1 img 0.723
+[mosaic] 2x2: pcb2 img 0.661
+[mosaic] 2x2: pcb3 img 0.763
+[mosaic] 2x2: pcb4 img 0.562
+[mosaic] 3x3: pcb1 img 0.606
+[mosaic] 3x3: pcb2 img 0.792
+[mosaic] 3x3: pcb3 img 0.690
+[mosaic] 3x3: pcb4 img 0.579
+[mosaic] 4x4: pcb1 img 0.503
+[mosaic] 4x4: pcb2 img 0.853
+[mosaic] 4x4: pcb3 img 0.634
+[mosaic] 4x4: pcb4 img 0.624
+saved results\visa_results.json

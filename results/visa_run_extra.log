@@ -1,0 +1,10 @@
+loaded in 21s: {'pcb1': (100, 200), 'pcb2': (100, 200), 'pcb3': (100, 201), 'pcb4': (100, 201)}
+[paper] wide_resnet50_l23: pcb1 img 0.922 pix 0.997
+[paper] wide_resnet50_l23: pcb2 img 0.870 pix 0.985
+[paper] wide_resnet50_l23: pcb3 img 0.908 pix 0.982
+[paper] wide_resnet50_l23: pcb4 img 0.986 pix 0.988
+[cosine] pcb1: img 0.863 pix 0.996
+[cosine] pcb2: img 0.865 pix 0.983
+[cosine] pcb3: img 0.906 pix 0.981
+[cosine] pcb4: img 0.929 pix 0.981
+saved results\visa_results.json

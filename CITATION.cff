@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Unsupervised Solder-Defect Detection on PCBs with PatchCore and a Shared-Backbone Architecture"
+type: software
+authors:
+  - family-names: Fagundes
+    given-names: Andrei Edio
+date-released: 2026-11-30
+keywords:
+  - anomaly detection
+  - PatchCore
+  - DINOv2
+  - printed circuit board
+  - solder inspection
+  - automated optical inspection
+abstract: >-
+  Per-region PatchCore models for solder-defect inspection on PCB panels, with a
+  frozen DINOv2 backbone shared by every region model so that 130 models fit on a
+  6 GB GPU (-90% VRAM) with scores identical to the reference implementation.
+  Final project of the Computer Vision Master (VC MASTER) course, ICA / PUC-Rio.

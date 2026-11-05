@@ -1,0 +1,25 @@
+== WideResNet-50 (layer2): backbone 15.8 MB, bank 10119x512 = 19.8 MB
+  N=   1  shared     35.8 MB (13.4 ms/ROI)   dedicated     35.8 MB   saving 0.0%
+  N=   5  shared    115.8 MB (15.1 ms/ROI)   dedicated    180.5 MB   saving 35.8%
+  N=  10  shared    215.8 MB (15.1 ms/ROI)   dedicated    359.5 MB   saving 40.0%
+  N=  20  shared    415.8 MB (14.9 ms/ROI)   dedicated    717.6 MB   saving 42.1%
+  N=  40  shared    815.8 MB (14.9 ms/ROI)   dedicated   1433.8 MB   saving 43.1%
+  N=  80  shared   1615.9 MB (15.0 ms/ROI)   dedicated   2866.1 MB   saving 43.6%
+  N= 130  shared   2615.9 MB (15.5 ms/ROI)   dedicated   4656.5 MB   saving 43.8%
+== DINOv2 ViT-S/14: backbone 64.8 MB, bank 8658x384 = 12.7 MB
+  N=   1  shared     78.1 MB (75.6 ms/ROI)   dedicated     78.1 MB   saving 0.0%
+  N=   5  shared    128.8 MB (45.7 ms/ROI)   dedicated    384.1 MB   saving 66.5%
+  N=  10  shared    192.2 MB (41.9 ms/ROI)   dedicated    766.7 MB   saving 74.9%
+  N=  20  shared    319.0 MB (43.4 ms/ROI)   dedicated   1531.8 MB   saving 79.2%
+  N=  40  shared    572.7 MB (42.9 ms/ROI)   dedicated   3062.0 MB   saving 81.3%
+  N=  80  shared   1080.1 MB (39.4 ms/ROI)   dedicated   6123.9 MB (projected)  saving 82.4%
+  N= 130  shared   1714.2 MB (37.4 ms/ROI)   dedicated   9951.4 MB (projected)  saving 82.8%
+== DINOv2 ViT-B/14: backbone 250.0 MB, bank 8658x768 = 25.4 MB
+  N=   1  shared    275.4 MB (90.3 ms/ROI)   dedicated    275.4 MB   saving 0.0%
+  N=   5  shared    379.4 MB (91.2 ms/ROI)   dedicated   1377.8 MB   saving 72.5%
+  N=  10  shared    509.4 MB (92.0 ms/ROI)   dedicated   2756.1 MB   saving 81.5%
+  N=  20  shared    769.4 MB (97.8 ms/ROI)   dedicated   5512.3 MB (projected)  saving 86.0%
+  N=  40  shared   1289.4 MB (84.2 ms/ROI)   dedicated  11024.5 MB (projected)  saving 88.3%
+  N=  80  shared   2329.5 MB (89.9 ms/ROI)   dedicated  22049.1 MB (projected)  saving 89.4%
+  N= 130  shared   3629.5 MB (90.3 ms/ROI)   dedicated  35829.7 MB (projected)  saving 89.9%
+saved results/vram_benchmark.json
