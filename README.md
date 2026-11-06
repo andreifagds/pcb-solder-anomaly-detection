@@ -39,7 +39,7 @@ Trabalho apresentado ao curso [VC MASTER](https://ica.puc-rio.ai/vc-master) como
 Esse projeto nasceu de um problema bem concreto da linha onde eu trabalho. No fim da montagem de fontes, cada painel tem mais de 32 plaquinhas, centenas de pontos de solda, e alguém precisa olhar um por um procurando curto, falta de solda ou excesso. Hoje uma câmera faz isso na estação:
 
 1. O operador coloca o painel na jiga e aperta **Iniciar teste**. Uma câmera de 26 MP fotografa o painel inteiro.
-2. O painel é dividido em 110 a 120 regiões (ROIs). Cada região tem o seu próprio modelo, que aprendeu **só com fotos de placa boa**, sem nenhum defeito rotulado.
+2. O painel é dividido em 110 a 120 regiões (ROIs). Cada região tem o seu próprio modelo, que aprendeu só com fotos de placa boa, sem nenhum defeito rotulado.
 3. Cada região ganha uma nota. Passou do limite e a anomalia encosta numa solda: reprova, com o contorno do problema. Passou do limite mas longe de qualquer solda (risco, poeira, etiqueta): fica registrada e não reprova.
 4. O resultado sai em uns 12 segundos, e os 120 modelos rodam juntos numa GPU só. No meu notebook, com 6 GB, a Placa D inteira ocupou 5,3 GB.
 5. Placa nova é só fotografar painéis bons e treinar. Não precisa juntar foto de defeito.
@@ -59,11 +59,11 @@ O caminho até funcionar foi bem menos direto do que eu imaginava. Tentei três 
 
 ### Resumo
 
-Conferir solda de placa eletrônica no olho é um trabalho cansativo, e a atenção cai ao longo do turno. Os defeitos que importam (curto, falta de solda, excesso) são raros e cada um aparece de um jeito, então montar um dataset rotulado para treinar um detector supervisionado não é viável na linha. Neste trabalho usei o PatchCore, que aprende só com peça boa, para inspecionar painéis com mais de 32 placas de fonte. Cheguei na solução depois de três tentativas. Um modelo para o painel inteiro não enxergava um defeito de 1 mm. Um modelo único para todos os recortes (ROIs) falhava porque, nessas placas, alguns curtos e faltas de solda são propositais. Um modelo por ROI resolveu a detecção, mas cada modelo carregava a sua própria cópia do backbone, e 130 ROIs não cabiam na GPU. Como o PatchCore nunca treina o backbone, essas 130 cópias são idênticas: passei a carregar um único DINOv2 congelado e cada ROI guarda só o seu banco de memória. As notas ficam praticamente iguais às do anomalib (diferença de 0,001%) e a VRAM para 130 ROIs cai de 35,0 GB (projetado) para 3,5 GB (medido) numa GPU de notebook de 6 GB, 90% a menos. O sistema roda na estação da linha: um painel de 120 regiões sai em 11,8 s, e um filtro que só reprova anomalia encostada numa solda tirou 65 de 163 reprovações falsas sem perder os curtos conhecidos. Também rodei o pipeline nas quatro categorias de PCB do dataset público VisA. Ele reproduziu a perda de sinal da tentativa do painel inteiro, mostrou que guardar só 1% dos vetores não piora o resultado e trouxe uma surpresa: nessas placas a configuração de produção (bloco 8 do DINOv2 ViT-B) foi a mais fraca das testadas, e o bloco 2 da mesma rede chegou a AUROC de imagem de 0,933 contra 0,787. A camada, portanto, precisa ser validada para cada produto.
+Conferir solda no olho, painel atrás de painel, cansa, e a atenção cai ao longo do turno. E os defeitos que importam (curto, falta de solda, excesso) são raros e cada um aparece de um jeito, então montar um dataset rotulado para treinar um detector supervisionado na linha não é viável. Por isso usei o PatchCore, que aprende só com peça boa, para inspecionar painéis com mais de 32 placas de fonte. Cheguei na solução na base da tentativa e erro, depois de três versões que não deram certo. Um modelo para o painel inteiro não enxergava um defeito de 1 mm. Um modelo único para todas as regiões (ROIs) se confundia, porque nessas placas alguns curtos são propositais. E um modelo por ROI detectava bem, mas cada um carregava a sua própria cópia do backbone, e 130 ROIs não cabiam na GPU. Como o PatchCore nunca treina o backbone, essas 130 cópias eram iguais. Passei a carregar um único DINOv2, e cada ROI guarda só o seu banco de memória: as notas ficam praticamente iguais às do anomalib (0,001% de diferença) e a VRAM de 130 ROIs cai de 35 GB (projetado) para 3,5 GB (medido), 90% a menos, numa GPU de notebook de 6 GB. Hoje o sistema roda na estação da linha: um painel de 120 regiões sai em 11,8 s, e um filtro que só reprova anomalia encostada numa solda tirou 65 de 163 reprovações falsas sem perder os curtos conhecidos. Também rodei tudo nas quatro PCBs do dataset público VisA, e veio uma surpresa: ali a configuração que eu uso na linha (bloco 8 do DINOv2) foi a pior das que testei, e o bloco 2 da mesma rede foi bem melhor (AUROC de 0,933 contra 0,787). Ou seja, a camada precisa ser testada em cada produto.
 
 ### Abstract
 
-Checking solder joints by eye is tiring work, and attention drops during a shift. The defects that matter (shorts, missing or excess solder) are rare and each one looks different, so a labeled dataset for a supervised detector is not realistic on the line. I used PatchCore, which learns from good parts only, to inspect panels with more than 32 power-supply boards. The final design came after three attempts. A single model for the whole panel could not see a 1 mm defect. A single model for all regions of interest (ROIs) failed because, on these boards, some shorts and missing joints are intentional. One model per ROI solved detection, but each model carried its own copy of the backbone, and 130 ROIs did not fit in the GPU. PatchCore never trains the backbone, so those 130 copies are identical: I now load one frozen DINOv2 and each ROI keeps only its memory bank. Scores stay practically the same as anomalib's (0.001% difference) and VRAM for 130 ROIs goes from 35.0 GB (projected) to 3.5 GB (measured) on a 6 GB laptop GPU, 90% less. The system runs at the station on the line: a 120-region panel is inspected in 11.8 s, and a filter that only fails anomalies touching a solder joint removed 65 of 163 false rejections without losing the known shorts. I also ran the pipeline on the four PCB categories of the public VisA dataset. It reproduced the loss of signal of the whole-panel attempt, showed that keeping only 1% of the vectors does not hurt, and brought a surprise: on those boards the production setting (block 8 of DINOv2 ViT-B) was the weakest one tested, and block 2 of the same network reached an image AUROC of 0.933 against 0.787. The layer has to be validated per product.
+Checking solder joints by eye, panel after panel, is tiring, and attention drops during a shift. The defects that matter (shorts, missing or excess solder) are rare and each one looks different, so building a labeled dataset for a supervised detector on the line is not realistic. That is why I used PatchCore, which learns from good parts only, to inspect panels with more than 32 power-supply boards. I got to the final design by trial and error, after three versions that did not work. One model for the whole panel could not see a 1 mm defect. One model for all regions (ROIs) got confused, because some shorts on these boards are intentional. And one model per ROI detected well, but each one carried its own copy of the backbone, and 130 ROIs did not fit in the GPU. PatchCore never trains the backbone, so those 130 copies were identical. Now a single DINOv2 is loaded once and each ROI keeps only its memory bank: scores stay practically the same as anomalib's (0.001% difference) and VRAM for 130 ROIs drops from 35 GB (projected) to 3.5 GB (measured), 90% less, on a 6 GB laptop GPU. Today the system runs at the station on the line: a 120-region panel is inspected in 11.8 s, and a filter that only fails anomalies touching a solder joint removed 65 of 163 false rejections without losing the known shorts. I also ran everything on the four PCB categories of the public VisA dataset, and got a surprise: there, the setting I use on the line (block 8 of DINOv2) was the worst one I tested, and block 2 of the same network did much better (AUROC 0.933 against 0.787). In other words, the layer has to be tested for each product.
 
 ---
 
@@ -91,7 +91,7 @@ Checking solder joints by eye is tiring work, and attention drops during a shift
 
 ### 1.1 O problema
 
-As placas saem da solda por onda presas num **painel**, uma placa grande com mais de 32 fontes pequenas. Antes de separar tudo, alguém confere centenas de pontos de solda atrás de três tipos de defeito:
+As placas saem da solda por onda presas num painel, uma placa grande com mais de 32 fontes pequenas. Antes de separar tudo, alguém confere centenas de pontos de solda atrás de três tipos de defeito:
 
 | Defeito | Como aparece |
 |---|---|
@@ -110,22 +110,22 @@ Parece pouco, mas uma ponte de 1 mm já basta para a placa reprovar no teste fin
 
 A primeira pergunta que todo mundo faz é: por que não treinar um YOLO? Porque um detector supervisionado precisa de muito exemplo rotulado de cada tipo de defeito, e defeito, numa linha que já funciona bem, é raro. Tem milhares de soldas boas para cada ruim, e as ruins nunca são iguais. Eu levaria meses juntando um dataset decente, e o próximo defeito diferente continuaria de fora.
 
-A detecção de anomalias vira o problema do avesso. Em vez de ensinar o que é defeito, eu ensino como é uma solda boa, e o modelo marca o que não se parece com ela. Peça boa é o que mais tem: a linha produz o dia inteiro. Escolhi o PatchCore [1] porque ele é a referência nos benchmarks industriais, é simples de treinar (não tem aquele treino longo de rede neural, com várias épocas) e ainda devolve um mapa de calor mostrando onde está o problema.
+A detecção de anomalias vira o problema do avesso. Em vez de ensinar o que é defeito, eu ensino como é uma solda boa, e o modelo marca o que não se parece com ela. Peça boa é o que mais tem: a linha produz o dia inteiro. Fui no PatchCore [1] porque é o método que mais aparece nos artigos de inspeção industrial e já vem pronto no anomalib, então dava para testar rápido. Ele também não tem aquele treino longo de rede neural, com várias épocas, e ainda devolve um mapa de calor mostrando onde está o problema, que é o que o operador quer ver.
 
-### 1.3 Objetivo e contribuições
+### 1.3 O que eu queria e o que saiu disso
 
-O que eu queria era um sistema que achasse defeito de solda em painel de verdade, rodasse numa GPU modesta e pudesse ser retreinado só com foto de peça boa.
+A ideia era simples: um sistema que achasse defeito de solda em painel de verdade, rodasse numa GPU modesta e pudesse ser retreinado só com foto de peça boa, sem ninguém precisar ficar caçando defeito para rotular.
 
-No caminho, o trabalho acabou trazendo quatro coisas:
+No caminho, saíram quatro coisas que acho que valem a pena mostrar:
 
-1. Um pipeline com o PatchCore e um modelo por ROI para inspeção de solda, junto com as tentativas que falharam e que mostram por que cada região precisa do seu próprio modelo.
-2. Um backbone compartilhado por todos os modelos de ROI. Em vez de cada modelo carregar a sua cópia da rede, todos usam a mesma, e cada um guarda só a sua parte própria (o banco de memória). A nota continua a mesma e a VRAM cai uns 90% com o DINOv2 ViT-B.
-3. Arquivos de modelo bem menores: cada modelo de ROI em disco passou de 275 MB para 25 MB e carrega em 18 ms.
-4. Um jeito de escolher o limiar de reprovação usando só fotos de peça boa, sem precisar de nenhuma amostra com defeito.
+1. Um modelo por ROI para inspecionar solda com o PatchCore, junto com as tentativas que deram errado e mostram por que cada região precisa do seu próprio modelo.
+2. Um backbone só para todos os modelos de ROI. Em vez de cada modelo carregar a sua cópia da rede, todos usam a mesma, e cada um guarda só o seu banco de memória. A nota não muda e a VRAM cai uns 90% com o DINOv2 ViT-B.
+3. Arquivos de modelo bem menores: cada ROI foi de 275 MB para 25 MB em disco e carrega em 18 ms.
+4. Um jeito de achar o limite de reprovação usando só foto de peça boa, sem nenhuma amostra com defeito.
 
 ### 1.4 Trabalhos relacionados
 
-O PaDiM [9] e o PatchCore [1] são dois dos métodos mais conhecidos para esse tipo de detecção de anomalias em imagem industrial. O PatchCore guarda um "banco de memória" com pedacinhos das imagens boas e compara cada imagem nova com ele, e virou a referência no MVTec AD [7] e no VisA [6], os dois datasets públicos mais usados nessa área.
+Quando comecei a pesquisar, dois nomes apareciam em todo lugar: o PaDiM [9] e o PatchCore [1]. O PatchCore guarda um "banco de memória" com pedacinhos das imagens boas e compara cada imagem nova com ele, e virou a referência no MVTec AD [7] e no VisA [6], os dois datasets públicos mais usados nessa área.
 
 O AnomalyDINO [2] mostrou que o DINOv2 [3], uma rede da Meta treinada sem rótulos, funciona muito bem nesse tipo de comparação, mesmo com poucas imagens boas. Foi lendo esse artigo que resolvi testar o DINOv2.
 
@@ -165,7 +165,7 @@ As fotos de produção não podem ser publicadas. Para ter resultado que qualque
 
 **A iluminação.** Repare que nas fotos a solda aparece vermelha, verde e azul. Isso não é efeito de software: são três fitas de LED montadas em volta da jiga, em alturas diferentes. A vermelha fica lá em cima, perto da câmera, a verde no meio e a azul embaixo, quase rente ao painel. Solda é brilhante, quase um espelho, então cada ponto dela só devolve para a câmera a luz que chega de um ângulo bem específico, e esse ângulo depende de quanto o ponto está inclinado. A parte plana reflete a fita de cima e sai vermelha. Uma encosta suave reflete a verde, e uma encosta íngreme reflete a azul. A máscara verde da placa é fosca, espalha a luz para todo lado e fica escura.
 
-Na prática, a cor vira uma espécie de mapa de altura: numa foto comum dá para "ver" se a solda está alta, baixa, cheia ou faltando. Uma falta de solda costuma deixar o pad plano e vermelho, sem o anel azul da encosta; um excesso vira uma bola com mais encosta, e portanto mais azul; uma ponte aparece como uma faixa colorida ligando dois terminais. É uma técnica antiga de inspeção de solda, a iluminação em camadas de cores [11], e ela ajuda bastante o PatchCore: diferenças de formato que seriam sutis em tons de cinza viram diferenças de cor bem marcadas. É também essa cor que o filtro de solda usa para achar onde tem solda na placa (seção 2.3).
+Na prática, a cor vira uma espécie de mapa de altura: numa foto comum dá para "ver" se a solda está alta, baixa, cheia ou faltando. Uma falta de solda costuma deixar o pad plano e vermelho, sem o anel azul da encosta. Um excesso vira uma bola com mais encosta, então mais azul. E uma ponte aparece como uma faixa colorida ligando dois terminais. É uma técnica antiga de inspeção de solda, a iluminação em camadas de cores [11], e ela ajuda bastante o PatchCore: diferenças de formato que seriam sutis em tons de cinza viram diferenças de cor bem marcadas. É também essa cor que o filtro de solda usa para achar onde tem solda na placa (seção 2.3).
 
 <p align="center">
   <img src="assets/figures/lighting_pt.gif" width="100%"><br>
@@ -199,7 +199,7 @@ No fim das contas, "treinar" é só passar as fotos boas pela rede uma vez e mon
 
 ### 2.3 Quatro tentativas
 
-Essa é a parte que eu mais gosto de contar, porque cada coisa que deu errado deixou uma decisão que ficou no projeto.
+Essa é a parte que eu mais gosto de contar. Nada aqui foi planejado desde o começo: fui testando, vendo quebrar e ajustando, e cada coisa que deu errado deixou uma decisão que ficou no projeto.
 
 <p align="center">
   <img src="assets/figures/journey_pt.png" width="100%"><br>
@@ -236,7 +236,7 @@ A lição foi que o limite era resolução, e a saída foi dar zoom: recortar re
 
 Com as ROIs desenhadas, pensei: e se eu jogar todos os recortes num banco de memória só? Um modelo em vez de 130 seria bem mais barato.
 
-Não funcionou, e por um motivo que eu só entendi olhando as placas com calma. Nesses painéis, alguns curtos e algumas faltas de solda são **propositais**. Certos terminais são ligados de propósito no projeto, e alguns pads ficam vazios porque são de uma variante que não é montada. Com um banco só, "normal" passa a ser tudo que qualquer ROI tem:
+Não funcionou, e por um motivo que eu só entendi olhando as placas com calma. Nesses painéis, alguns curtos e algumas faltas de solda são propositais. Certos terminais são ligados de propósito no projeto, e alguns pads ficam vazios porque são de uma variante que não é montada. Com um banco só, "normal" passa a ser tudo que qualquer ROI tem:
 
 ```
 ROI 7   curto proposital  → entra no banco como normal
@@ -340,7 +340,7 @@ No código, isso ficou em três partes principais: uma que carrega o backbone um
 
 ### 2.5 Parâmetros e por que escolhi cada um
 
-Cada número da configuração tem uma história:
+Nenhum desses números saiu de fórmula. Foi tudo no testa, erra e ajusta, e cada um tem uma história:
 
 | Parâmetro | Valor | Por quê |
 |---|---|---|
@@ -548,7 +548,7 @@ O DINOv2 tem 12 blocos, e dá para tirar as features de qualquer um deles. Teste
 | 8 (produção) | 0,787 | 0,975 | 249 MB | 91% |
 | 11 | 0,904 | 0,985 | 331 MB | 93% |
 
-O bloco 8, que eu uso em produção, ficou bem no fundo. Antes de acreditar, quis ter certeza de que a diferença entre o bloco 2 e o bloco 8 não era sorte, então fiz um teste estatístico simples (bootstrap, com o [`scripts/bootstrap_ci.py`](scripts/bootstrap_ci.py)). A vantagem do bloco 2 se manteve nas quatro categorias, com margem de segurança. Treinando o bloco 2 de novo do zero, o resultado mudou menos de 0,01.
+O bloco 8, que eu uso em produção, ficou bem no fundo. Antes de acreditar, quis ter certeza de que não era sorte, então rodei um teste estatístico simples (bootstrap, com o [`scripts/bootstrap_ci.py`](scripts/bootstrap_ci.py)), e o bloco 2 continuou na frente nas quatro categorias. Treinando o bloco 2 de novo do zero, o resultado mudou menos de 0,01.
 
 Um bloco mais no começo da rede também deixa o backbone menor, então o bloco 2 seria mais rápido e gastaria menos VRAM, mesmo economizando um pouco menos no compartilhamento (78% em vez de 91%). Ainda não testei o bloco 2 nas soldas, mas é a primeira coisa que quero testar na linha.
 
@@ -584,9 +584,9 @@ Para a tentativa 2, treinei um modelo só com os quatro tipos de placa juntos, e
 
 ## 4. Conclusões
 
-O PatchCore com um modelo por ROI acha defeito de solda usando só painel bom, e é exatamente isso que o torna utilizável numa linha em que defeito é raro. Olhando para trás, as tentativas que falharam foram as que mais me ensinaram. O modelo do painel inteiro mostrou que resolução vem antes de tudo. O modelo único mostrou que posição importa, pelo menos em placa com curto proposital e pad vazio: cada ROI precisa da sua própria ideia de normal.
+Resumindo: o PatchCore com um modelo por ROI acha defeito de solda usando só painel bom, e é justamente isso que faz ele funcionar numa linha em que defeito é raro. Olhando para trás, as tentativas que deram errado foram as que mais me ensinaram. A do painel inteiro mostrou que resolução vem antes de tudo. A do modelo único mostrou que posição importa, pelo menos em placa com curto proposital e pad vazio: cada ROI precisa da sua própria ideia de normal.
 
-A contribuição principal veio quando percebi que esse desenho por ROI gastava quase toda a memória com cópias iguais da mesma rede. Compartilhando um backbone e guardando só os bancos de memória por ROI:
+O pulo do gato foi perceber que esse esquema de um modelo por ROI gastava quase toda a memória com cópias iguais da mesma rede. Compartilhando o backbone e guardando só os bancos de memória por ROI:
 
 - as notas continuam praticamente as mesmas do anomalib;
 - a VRAM cai 90% com o DINOv2 ViT-B, de 35 GB para 3,5 GB com 130 ROIs, que na prática é a diferença entre não rodar e rodar numa GPU de notebook de 6 GB;
@@ -822,6 +822,8 @@ O código está sob a licença [MIT](LICENSE). As fotos dos painéis em `assets/
 ### Agradecimentos
 
 Obrigado à professora Manoela Kohler pela orientação, à equipe do ICA / PUC-Rio e ao pessoal da linha de produção e da engenharia de testes, que separou painel, marcou defeito e teve paciência com os falsos defeitos das primeiras versões.
+
+E um obrigado meio brincando, meio sério, ao Claude Code. Como bom dev de tentativa e erro, boa parte deste projeto saiu de conversa com ele: código, scripts de gráfico, benchmark rodando no notebook enquanto eu fazia outra coisa e até a revisão deste README. Ele escreveu muita linha. As ideias erradas que viraram as tentativas 1, 2 e 3 foram todas minhas.
 
 ---
 

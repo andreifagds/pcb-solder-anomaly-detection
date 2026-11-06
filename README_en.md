@@ -39,7 +39,7 @@ Trabalho apresentado ao curso [VC MASTER](https://ica.puc-rio.ai/vc-master) como
 This project started from a very practical problem on the line where I work. At the end of the power-supply assembly, every panel carries more than 32 small boards and hundreds of solder joints, and somebody has to look at each one for shorts, missing solder or excess solder. Today a camera does that at the station:
 
 1. The operator places the panel on the jig and presses **Start test**. A 26 MP camera photographs the whole panel.
-2. The panel is split into 110 to 120 regions (ROIs). Each region has its own model, which learned **from photos of good boards only**, without a single labeled defect.
+2. The panel is split into 110 to 120 regions (ROIs). Each region has its own model, which learned from photos of good boards only, without a single labeled defect.
 3. Each region gets a score. Above the limit and touching a solder joint: rejected, with the outline of the problem. Above the limit but far from any solder (a scratch, dust, a label): logged, not rejected.
 4. The result comes out in about 12 seconds, and the 120 models run together on a single GPU. On my 6 GB laptop, the whole Board D took 5.3 GB.
 5. A new board only needs photos of good panels and a training run. No need to collect defect photos.
@@ -59,11 +59,11 @@ Getting there was a lot less straightforward than I expected. I went through thr
 
 ### Resumo
 
-Conferir solda de placa eletrônica no olho é um trabalho cansativo, e a atenção cai ao longo do turno. Os defeitos que importam (curto, falta de solda, excesso) são raros e cada um aparece de um jeito, então montar um dataset rotulado para treinar um detector supervisionado não é viável na linha. Neste trabalho usei o PatchCore, que aprende só com peça boa, para inspecionar painéis com mais de 32 placas de fonte. Cheguei na solução depois de três tentativas. Um modelo para o painel inteiro não enxergava um defeito de 1 mm. Um modelo único para todos os recortes (ROIs) falhava porque, nessas placas, alguns curtos e faltas de solda são propositais. Um modelo por ROI resolveu a detecção, mas cada modelo carregava a sua própria cópia do backbone, e 130 ROIs não cabiam na GPU. Como o PatchCore nunca treina o backbone, essas 130 cópias são idênticas: passei a carregar um único DINOv2 congelado e cada ROI guarda só o seu banco de memória. As notas ficam praticamente iguais às do anomalib (diferença de 0,001%) e a VRAM para 130 ROIs cai de 35,0 GB (projetado) para 3,5 GB (medido) numa GPU de notebook de 6 GB, 90% a menos. Também rodei o pipeline nas quatro categorias de PCB do dataset público VisA. Ele reproduziu a perda de sinal da tentativa do painel inteiro, mostrou que guardar só 1% dos vetores não piora o resultado e trouxe uma surpresa: nessas placas a configuração de produção (bloco 8 do DINOv2 ViT-B) foi a mais fraca das testadas, e o bloco 2 da mesma rede chegou a AUROC de imagem de 0,933 contra 0,787. A camada, portanto, precisa ser validada para cada produto.
+Conferir solda no olho, painel atrás de painel, cansa, e a atenção cai ao longo do turno. E os defeitos que importam (curto, falta de solda, excesso) são raros e cada um aparece de um jeito, então montar um dataset rotulado para treinar um detector supervisionado na linha não é viável. Por isso usei o PatchCore, que aprende só com peça boa, para inspecionar painéis com mais de 32 placas de fonte. Cheguei na solução na base da tentativa e erro, depois de três versões que não deram certo. Um modelo para o painel inteiro não enxergava um defeito de 1 mm. Um modelo único para todas as regiões (ROIs) se confundia, porque nessas placas alguns curtos são propositais. E um modelo por ROI detectava bem, mas cada um carregava a sua própria cópia do backbone, e 130 ROIs não cabiam na GPU. Como o PatchCore nunca treina o backbone, essas 130 cópias eram iguais. Passei a carregar um único DINOv2, e cada ROI guarda só o seu banco de memória: as notas ficam praticamente iguais às do anomalib (0,001% de diferença) e a VRAM de 130 ROIs cai de 35 GB (projetado) para 3,5 GB (medido), 90% a menos, numa GPU de notebook de 6 GB. Hoje o sistema roda na estação da linha: um painel de 120 regiões sai em 11,8 s, e um filtro que só reprova anomalia encostada numa solda tirou 65 de 163 reprovações falsas sem perder os curtos conhecidos. Também rodei tudo nas quatro PCBs do dataset público VisA, e veio uma surpresa: ali a configuração que eu uso na linha (bloco 8 do DINOv2) foi a pior das que testei, e o bloco 2 da mesma rede foi bem melhor (AUROC de 0,933 contra 0,787). Ou seja, a camada precisa ser testada em cada produto.
 
 ### Abstract
 
-Checking solder joints by eye is tiring work, and attention drops during a shift. The defects that matter (shorts, missing or excess solder) are rare and each one looks different, so a labeled dataset for a supervised detector is not realistic on the line. I used PatchCore, which learns from good parts only, to inspect panels with more than 32 power-supply boards. The final design came after three attempts. A single model for the whole panel could not see a 1 mm defect. A single model for all regions of interest (ROIs) failed because, on these boards, some shorts and missing joints are intentional. One model per ROI solved detection, but each model carried its own copy of the backbone, and 130 ROIs did not fit in the GPU. PatchCore never trains the backbone, so those 130 copies are identical: I now load one frozen DINOv2 and each ROI keeps only its memory bank. Scores stay practically the same as anomalib's (0.001% difference) and VRAM for 130 ROIs goes from 35.0 GB (projected) to 3.5 GB (measured) on a 6 GB laptop GPU, 90% less. The system runs at the station on the line: a 120-region panel is inspected in 11.8 s, and a filter that only fails anomalies touching a solder joint removed 65 of 163 false rejections without losing the known shorts. I also ran the pipeline on the four PCB categories of the public VisA dataset. It reproduced the loss of signal of the whole-panel attempt, showed that keeping only 1% of the vectors does not hurt, and brought a surprise: on those boards the production setting (block 8 of DINOv2 ViT-B) was the weakest one tested, and block 2 of the same network reached an image AUROC of 0.933 against 0.787. The layer has to be validated per product.
+Checking solder joints by eye, panel after panel, is tiring, and attention drops during a shift. The defects that matter (shorts, missing or excess solder) are rare and each one looks different, so building a labeled dataset for a supervised detector on the line is not realistic. That is why I used PatchCore, which learns from good parts only, to inspect panels with more than 32 power-supply boards. I got to the final design by trial and error, after three versions that did not work. One model for the whole panel could not see a 1 mm defect. One model for all regions (ROIs) got confused, because some shorts on these boards are intentional. And one model per ROI detected well, but each one carried its own copy of the backbone, and 130 ROIs did not fit in the GPU. PatchCore never trains the backbone, so those 130 copies were identical. Now a single DINOv2 is loaded once and each ROI keeps only its memory bank: scores stay practically the same as anomalib's (0.001% difference) and VRAM for 130 ROIs drops from 35 GB (projected) to 3.5 GB (measured), 90% less, on a 6 GB laptop GPU. Today the system runs at the station on the line: a 120-region panel is inspected in 11.8 s, and a filter that only fails anomalies touching a solder joint removed 65 of 163 false rejections without losing the known shorts. I also ran everything on the four PCB categories of the public VisA dataset, and got a surprise: there, the setting I use on the line (block 8 of DINOv2) was the worst one I tested, and block 2 of the same network did much better (AUROC 0.933 against 0.787). In other words, the layer has to be tested for each product.
 
 ---
 
@@ -91,7 +91,7 @@ Checking solder joints by eye is tiring work, and attention drops during a shift
 
 ### 1.1 The problem
 
-The boards come out of wave soldering held together in a **panel**, one big board with more than 32 small power supplies. Before the panel is cut, someone checks hundreds of solder joints looking for three kinds of defect:
+The boards come out of wave soldering held together in a panel, one big board with more than 32 small power supplies. Before the panel is cut, someone checks hundreds of solder joints looking for three kinds of defect:
 
 | Defect | What it looks like |
 |---|---|
@@ -110,22 +110,22 @@ It doesn't sound like much, but a 1 mm bridge is enough to fail the board at fin
 
 The first question everybody asks is: why not train a YOLO? Because a supervised detector needs a lot of labeled examples of every defect type, and on a line that already works well, defects are rare. There are thousands of good joints for each bad one, and the bad ones are never the same. I would spend months collecting a decent dataset, and the next new defect would still be missing from it.
 
-Anomaly detection turns the problem inside out. Instead of teaching the model what a defect looks like, I teach it what a good joint looks like, and it flags whatever does not match. Good parts are the one thing I have plenty of: the line makes them all day. I picked PatchCore [1] because it is the reference method on industrial benchmarks, it is simple to train (none of that long neural-network training over many epochs) and it gives back a heat map showing where the problem is.
+Anomaly detection turns the problem inside out. Instead of teaching the model what a defect looks like, I teach it what a good joint looks like, and it flags whatever does not match. Good parts are the one thing I have plenty of: the line makes them all day. I went with PatchCore [1] because it is the method that shows up the most in industrial inspection papers and it comes ready in anomalib, so I could test it fast. It also has none of that long neural-network training over many epochs, and it gives back a heat map showing where the problem is, which is what the operator wants to see.
 
-### 1.3 Goal and contributions
+### 1.3 What I wanted and what came out of it
 
-What I wanted was a system that finds solder defects on real panels, runs on a modest GPU and can be retrained with photos of good parts only.
+The idea was simple: a system that finds solder defects on real panels, runs on a modest GPU and can be retrained with photos of good parts only, without anybody having to hunt for defects to label.
 
-Along the way the work ended up bringing four things:
+Along the way, four things came out that I think are worth showing:
 
-1. A pipeline with PatchCore and one model per ROI for solder inspection, together with the failed attempts that show why each region needs its own model.
-2. One backbone shared by every ROI model. Instead of each model carrying its own copy of the network, they all use the same one, and each keeps only its own part (the memory bank). Scores stay the same and VRAM drops by about 90% with DINOv2 ViT-B.
-3. Much smaller model files: each ROI model on disk went from 275 MB to 25 MB, and it loads in 18 ms.
-4. A way of choosing the rejection threshold using only photos of good parts, without any defective sample.
+1. One model per ROI to inspect solder with PatchCore, together with the attempts that went wrong and show why each region needs its own model.
+2. A single backbone for every ROI model. Instead of each model carrying its own copy of the network, they all use the same one, and each keeps only its memory bank. Scores don't change and VRAM drops by about 90% with DINOv2 ViT-B.
+3. Much smaller model files: each ROI went from 275 MB to 25 MB on disk and loads in 18 ms.
+4. A way to find the rejection limit using only photos of good parts, without a single defective sample.
 
 ### 1.4 Related work
 
-PaDiM [9] and PatchCore [1] are two of the best-known methods for this kind of anomaly detection on industrial images. PatchCore keeps a "memory bank" with small pieces of the good images and compares each new image against it, and it became the reference on MVTec AD [7] and VisA [6], the two most used public datasets in this area.
+When I started reading about it, two names showed up everywhere: PaDiM [9] and PatchCore [1]. PatchCore keeps a "memory bank" with small pieces of the good images and compares each new image against it, and it became the reference on MVTec AD [7] and VisA [6], the two most used public datasets in this area.
 
 AnomalyDINO [2] showed that DINOv2 [3], a network from Meta trained without labels, works very well for this kind of comparison, even with few good images. Reading that paper is what made me try DINOv2.
 
@@ -165,7 +165,7 @@ The production photos cannot be published. To have results anyone can reproduce,
 
 **The lighting.** Notice that the solder shows up red, green and blue in the photos. That is not a software effect: there are three LED strips mounted around the jig at different heights. The red one sits up high, next to the camera, the green one in the middle and the blue one low, almost level with the panel. Solder is shiny, close to a mirror, so each point of it only sends back to the camera the light that arrives from one specific angle, and that angle depends on how tilted the point is. The flat part reflects the top strip and comes out red. A gentle slope reflects the green one, and a steep slope the blue one. The green solder mask is matte, scatters light everywhere and stays dark.
 
-In practice, the color becomes a kind of height map: in an ordinary photo you can "see" whether the solder is high, low, full or missing. Missing solder usually leaves the pad flat and red, without the blue ring of the slope; excess solder becomes a ball with more slope, and so more blue; a bridge shows up as a colored band joining two pins. It is an old solder inspection technique, tiered-color illumination [11], and it helps PatchCore a lot: shape differences that would be subtle in gray levels turn into clear differences in color. It is also this color that the solder filter uses to find where the solder is on the board (Section 2.3).
+In practice, the color becomes a kind of height map: in an ordinary photo you can "see" whether the solder is high, low, full or missing. Missing solder usually leaves the pad flat and red, without the blue ring of the slope. Excess solder becomes a ball with more slope, so more blue. And a bridge shows up as a colored band joining two pins. It is an old solder inspection technique, tiered-color illumination [11], and it helps PatchCore a lot: shape differences that would be subtle in gray levels turn into clear differences in color. It is also this color that the solder filter uses to find where the solder is on the board (Section 2.3).
 
 <p align="center">
   <img src="assets/figures/lighting.gif" width="100%"><br>
@@ -199,7 +199,7 @@ So "training" is just running the good photos through the network once and build
 
 ### 2.3 Four attempts
 
-This is the part I like telling the most, because every thing that went wrong left a decision that stayed in the project.
+This is the part I like telling the most. None of it was planned from the start: I kept testing, watching it break and adjusting, and every thing that went wrong left a decision that stayed in the project.
 
 <p align="center">
   <img src="assets/figures/journey.png" width="100%"><br>
@@ -236,7 +236,7 @@ The lesson was that the limit was resolution, and the way out was to zoom in: cr
 
 With the ROIs drawn, I thought: what if I put every crop into one memory bank? One model instead of 130 would be much cheaper.
 
-It didn't work, and for a reason I only understood after looking at the boards carefully. On these panels, some shorts and some missing joints are **intentional**. Certain pins are bridged on purpose by design, and some pads stay empty because they belong to a variant that is not assembled. With one bank, "normal" becomes anything any ROI has:
+It didn't work, and for a reason I only understood after looking at the boards carefully. On these panels, some shorts and some missing joints are intentional. Certain pins are bridged on purpose by design, and some pads stay empty because they belong to a variant that is not assembled. With one bank, "normal" becomes anything any ROI has:
 
 ```
 ROI 7   intentional short  → goes into the bank as normal
@@ -340,7 +340,7 @@ In the code this became three main parts: one that loads the backbone once and l
 
 ### 2.5 Parameters and why I picked them
 
-Every number in the configuration has a story:
+None of these numbers came from a formula. It was all test, fail and adjust, and each one has a story:
 
 | Parameter | Value | Why |
 |---|---|---|
@@ -548,7 +548,7 @@ DINOv2 has 12 blocks, and the features can come from any of them. I tested four:
 | 8 (production) | 0.787 | 0.975 | 249 MB | 91% |
 | 11 | 0.904 | 0.985 | 331 MB | 93% |
 
-Block 8, the one I use in production, came out right at the bottom. Before believing it, I wanted to be sure the gap between block 2 and block 8 wasn't luck, so I ran a simple statistical test (bootstrap, with [`scripts/bootstrap_ci.py`](scripts/bootstrap_ci.py)). Block 2's advantage held in all four categories, with a safe margin. Training block 2 again from scratch moved the result by less than 0.01.
+Block 8, the one I use in production, came out right at the bottom. Before believing it, I wanted to be sure it wasn't luck, so I ran a simple statistical test (bootstrap, with [`scripts/bootstrap_ci.py`](scripts/bootstrap_ci.py)), and block 2 stayed ahead in all four categories. Training block 2 again from scratch moved the result by less than 0.01.
 
 A block closer to the start of the network also makes the backbone smaller, so block 2 would be faster and use less VRAM, even if sharing saves a bit less (78% instead of 91%). I haven't tested block 2 on the solder joints yet, but it's the first thing I want to try on the line.
 
@@ -584,9 +584,9 @@ For Attempt 2, I trained one model on the four board types together, and the res
 
 ## 4. Conclusions
 
-PatchCore with one model per ROI finds solder defects using good panels only, and that is exactly what makes it usable on a line where defects are rare. Looking back, the attempts that failed taught me the most. The whole-panel model showed that resolution comes before everything else. The single shared model showed that position matters, at least on boards with intentional shorts and empty pads: each ROI needs its own idea of normal.
+Bottom line: PatchCore with one model per ROI finds solder defects using good panels only, and that is exactly what makes it work on a line where defects are rare. Looking back, the attempts that went wrong taught me the most. The whole-panel one showed that resolution comes before everything else. The single-model one showed that position matters, at least on boards with intentional shorts and empty pads: each ROI needs its own idea of normal.
 
-The main contribution came when I realized that this per-ROI design was spending almost all of its memory on identical copies of the same network. Sharing one backbone and keeping only the memory banks per ROI:
+The trick was realizing that this one-model-per-ROI setup was spending almost all of its memory on identical copies of the same network. Sharing the backbone and keeping only the memory banks per ROI:
 
 - the scores stay practically the same as anomalib's;
 - VRAM goes down 90% with DINOv2 ViT-B, from 35 GB to 3.5 GB for 130 ROIs, which in practice is the difference between not running and running on a 6 GB laptop GPU;
@@ -822,6 +822,8 @@ The code is under the [MIT](LICENSE) license. The panel photos in `assets/photos
 ### Acknowledgments
 
 Thanks to Prof. Manoela Kohler for the guidance, to the ICA / PUC-Rio team, and to the people on the production line and in test engineering who collected panels, marked defects and were patient with the false alarms of the first versions.
+
+And a half-joking, half-serious thank you to Claude Code. Being a trial-and-error kind of dev, a good part of this project came out of conversations with it: code, chart scripts, benchmarks running on the laptop while I did something else, and even the review of this README. It wrote a lot of lines. The wrong ideas that became attempts 1, 2 and 3 were all mine.
 
 ---
 
