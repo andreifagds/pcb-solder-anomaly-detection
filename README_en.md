@@ -823,7 +823,7 @@ The code is under the [MIT](LICENSE) license. The panel photos in `assets/photos
 
 Thanks to Prof. Manoela Kohler for the guidance, to the ICA / PUC-Rio team, and to the people on the production line and in test engineering who collected panels, marked defects and were patient with the false alarms of the first versions.
 
-And a half-joking, half-serious thank you to Claude Code. Being a trial-and-error kind of dev, a good part of this project came out of conversations with it: code, chart scripts, benchmarks running on the laptop while I did something else, and even the review of this README. It wrote a lot of lines. The wrong ideas that became attempts 1, 2 and 3 were all mine.
+And thanks to Claude Code, which coded a good part of this with me. The mistakes of attempts 1, 2 and 3 are all mine.
 
 ---
 
