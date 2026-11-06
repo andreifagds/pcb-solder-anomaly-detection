@@ -8,10 +8,10 @@ All photos here come from the production line (Board D), with the logo and produ
 | `panel_overview.jpg` / `panel_overview_pt.jpg` | Figure 1 | done |
 | `panel_rois.jpg` | Figure 2 | done |
 | `roi_mosaic.jpg` | Figure 3 | done |
+| `joint_closeup.jpg` | Figure 4 (right side of the lighting animation) | done (a close-up of real joints, no logo in the frame) |
 | `infer_output.jpg` | Figure 17 | done (a real inspection: job 1166) |
-| `attempt2_intentional_short.png` | Figure 5 | **needs the ROI with a bridge by design and a photo where the same bridge is a defect** |
 
-The server deletes the photos of each inspection after about two days, so the missing one has to come from a new inspection. Once a panel with a real bridge is inspected:
+To add new photos (for example a panel with a real bridge, for a side-by-side of an intentional and an accidental short), hide the logos first and build the figure from the clean panel:
 
 ```bash
 python scripts/hide_logo.py --template <panel.png> --box <x0 y0 x1 y1 of one logo> --input <panel.png> --output <panel_clean.png>

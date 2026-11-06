@@ -142,6 +142,7 @@ Tudo foi feito em cima do anomalib [5], a biblioteca da Intel para detecção de
 | Item | Valor |
 |---|---|
 | Câmera | câmera industrial de 26 MP, 5120 × 5120 px, fixa em cima da jiga |
+| Iluminação | três fitas de LED em alturas diferentes: vermelha perto da câmera, verde no meio, azul rente ao painel (Figura 4) |
 | Resolução na placa | uns 22 px por milímetro |
 | Tamanho da ROI | 512 × 512 px, uns 23 × 23 mm: um grupo de soldas e um pouco do entorno |
 | ROIs por painel | de 110 a 120 hoje (já foram 132 numa versão anterior) |
@@ -160,6 +161,15 @@ As fotos de produção não podem ser publicadas. Para ter resultado que qualque
 <p align="center">
   <img src="assets/photos/roi_mosaic.jpg" width="100%"><br>
   <i>Figura 3. Oito ROIs reais da Placa D. Mesmo sendo placas iguais, cada região tem soldas, componentes e textos diferentes, e é isso que cada modelo aprende como "normal".</i>
+</p>
+
+**A iluminação.** Repare que nas fotos a solda aparece vermelha, verde e azul. Isso não é efeito de software: são três fitas de LED montadas em volta da jiga, em alturas diferentes. A vermelha fica lá em cima, perto da câmera, a verde no meio e a azul embaixo, quase rente ao painel. Solda é brilhante, quase um espelho, então cada ponto dela só devolve para a câmera a luz que chega de um ângulo bem específico, e esse ângulo depende de quanto o ponto está inclinado. A parte plana reflete a fita de cima e sai vermelha. Uma encosta suave reflete a verde, e uma encosta íngreme reflete a azul. A máscara verde da placa é fosca, espalha a luz para todo lado e fica escura.
+
+Na prática, a cor vira uma espécie de mapa de altura: numa foto comum dá para "ver" se a solda está alta, baixa, cheia ou faltando. Uma falta de solda costuma deixar o pad plano e vermelho, sem o anel azul da encosta; um excesso vira uma bola com mais encosta, e portanto mais azul; uma ponte aparece como uma faixa colorida ligando dois terminais. É uma técnica antiga de inspeção de solda, a iluminação em camadas de cores [11], e ela ajuda bastante o PatchCore: diferenças de formato que seriam sutis em tons de cinza viram diferenças de cor bem marcadas. É também essa cor que o filtro de solda usa para achar onde tem solda na placa (seção 2.3).
+
+<p align="center">
+  <img src="assets/figures/lighting_pt.gif" width="100%"><br>
+  <i>Figura 4. Como as três fitas de LED viram cor na foto. À esquerda, uma solda em corte: para cada ponto, a linha mostra de qual fita vem a luz que chega na câmera, e a faixa de baixo mostra a cor que fica na foto. À direita, soldas reais da Placa D vistas de cima, com o mesmo padrão: topo achatado vermelho e encosta azul.</i>
 </p>
 
 ### 2.2 Como o PatchCore funciona
@@ -217,7 +227,7 @@ Só que a rede trabalha com imagens de 518 × 518 px, então a foto de 5120 × 5
 
 <p align="center">
   <img src="assets/figures/visa_attempt1_pt.png" width="100%"><br>
-  <i>Figura 4. A mesma coisa reproduzida numa placa pública do VisA. À esquerda, a placa com defeito escondida no meio de 16 placas boas; no centro, o mapa de calor desse "painel", em que o defeito quase não aparece; à direita, a mesma placa sozinha, em que o defeito é o ponto mais quente.</i>
+  <i>Figura 5. A mesma coisa reproduzida numa placa pública do VisA. À esquerda, a placa com defeito escondida no meio de 16 placas boas; no centro, o mapa de calor desse "painel", em que o defeito quase não aparece; à direita, a mesma placa sozinha, em que o defeito é o ponto mais quente.</i>
 </p>
 
 A lição foi que o limite era resolução, e a saída foi dar zoom: recortar regiões de interesse.
@@ -235,11 +245,6 @@ ROI 12  curto acidental   → o mais parecido no banco é o curto da ROI 7
 ```
 
 O PatchCore não sabe nada de posição. Se uma coisa é normal num lugar, ela vira normal em todo lugar. Fui conferir nos números e os bancos de duas ROIs diferentes ficaram duas vezes mais distantes entre si do que as fotos de uma mesma ROI. São "normais" diferentes de verdade.
-
-<p align="center">
-  <b>[foto a adicionar]</b> <code>assets/photos/attempt2_intentional_short.png</code><br>
-  <i>Figura 5. À esquerda, uma ROI em que a ponte é proposital. À direita, uma ROI em que a mesma ponte é defeito. Um modelo único não tem como separar as duas.</i>
-</p>
 
 Daí veio a segunda lição: cada ROI precisa do seu próprio modelo.
 
@@ -292,7 +297,7 @@ Compartilhar o backbone resolveu a memória, mas colocar isso para rodar na linh
 | Ligar uma otimização de velocidade do DINO | o anomalib deixa ela desligada por padrão | de 106 ms para 91 ms por ROI, com as mesmas notas |
 | Filtro de solda: só reprovar anomalia que encosta numa solda | o PatchCore marca o que é novo, e um risco na máscara ou uma poeira reprovavam tanto quanto um curto | em 163 reprovações antigas de três placas, 65 foram descartadas, todas conferidas uma a uma como risco, mancha ou etiqueta; os curtos conhecidos continuaram reprovando |
 
-O filtro de solda funciona assim. Com as mesmas fotos boas do treino, monto um mapa de onde tem solda na placa: o reflexo vermelho que a encosta do terminal faz sob o LED vermelho e as manchas claras e redondas dos terminais vistos de cima. Letra, serigrafia e trilha ficam de fora, porque são azuis ou finas demais. Cada solda ganha 25 px de folga em volta. Na inspeção, uma ROI acima do limite só reprova se a parte acima do limite encostar nesse mapa. Falta de solda continua sendo pega: o mapa vem das fotos boas, então o terminal vazio está dentro dele. Este repositório traz uma versão enxuta do filtro ([`solder.py`](src/pcbad/solder.py)). Ficou de fora uma regra extra da produção, que também reprova quando aparece ou some brilho de metal longe da solda (uma bolinha de solda caída em cima da serigrafia, por exemplo).
+O filtro de solda funciona assim. Com as mesmas fotos boas do treino, monto um mapa de onde tem solda na placa: o reflexo vermelho com contraste, que é a parte plana e brilhante da solda devolvendo a luz da fita de cima, e as manchas claras e cheias de azul e verde, que são as encostas (Figura 4). Letra, serigrafia e trilha ficam de fora, porque não têm esse reflexo de metal e são finas demais para virar mancha. Cada solda ganha 25 px de folga em volta. Na inspeção, uma ROI acima do limite só reprova se a parte acima do limite encostar nesse mapa. Falta de solda continua sendo pega: o mapa vem das fotos boas, então o terminal vazio está dentro dele. Este repositório traz uma versão enxuta do filtro ([`solder.py`](src/pcbad/solder.py)). Ficou de fora uma regra extra da produção, que também reprova quando aparece ou some brilho de metal longe da solda (uma bolinha de solda caída em cima da serigrafia, por exemplo).
 
 A suavização do mapa rendeu até uma conversa com o pessoal do anomalib: abri a [issue #3780](https://github.com/open-edge-platform/anomalib/issues/3780) sugerindo a mudança. O mantenedor pediu mais testes e, na versão mais nova do PyTorch que eles usam hoje, a etapa original já estava rápida. Retirei a sugestão. O ganho existe aqui, que uso o PyTorch 2.5.1, mas não vale para as versões mais recentes.
 
@@ -702,7 +707,8 @@ python scripts/infer.py --models models/visa_pcb1 --images data/visa_demo/pcb1/t
 | `python scripts/visa_layer_examples.py --visa data/visa/VisA --split data/visa/1cls.csv` | mapas do bloco 2 da Figura 14 | uns 10 min |
 | `python scripts/bootstrap_ci.py --visa data/visa/VisA --split data/visa/1cls.csv` | teste estatístico da seção 3.6 | menos de 1 min |
 | `python scripts/make_visa_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | gráficos do VisA | menos de 1 min |
-| `python scripts/make_visa_photo_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | Figuras 4, 11 e 15 | uns 15 min |
+| `python scripts/make_visa_photo_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | Figuras 5, 11 e 15 | uns 15 min |
+| `python scripts/make_lighting_figure.py` | Figura 4 (animação da iluminação) | segundos |
 
 Os três scripts de figura (`make_figures.py`, `make_visa_figures.py` e `make_visa_photo_figures.py`) geram as figuras em inglês. Com `FIG_LANG=pt` na frente do comando saem as versões em português, com final `_pt`, que são as usadas neste README.
 
@@ -767,6 +773,7 @@ Para cada painel sai uma imagem com cada ROI num quadro verde, vermelho (defeito
 │   ├── make_figures.py        gráficos de memória, figura geral e animação
 │   ├── make_visa_figures.py   gráficos do VisA
 │   ├── make_visa_photo_figures.py  figuras com imagens do VisA
+│   ├── make_lighting_figure.py     animação da iluminação com três fitas de LED
 │   ├── visa_layer_examples.py mapas de calor do bloco 2
 │   ├── bootstrap_ci.py        teste estatístico bloco 2 vs bloco 8
 │   ├── make_photo_figures.py  gera as figuras com foto real a partir das fotos de produção
@@ -794,6 +801,7 @@ Este repositório é uma versão limpa do núcleo de inspeção de um sistema in
 8. O. Sener, S. Savarese. *Active Learning for Convolutional Neural Networks: A Core-Set Approach.* ICLR 2018. [arXiv:1708.00489](https://arxiv.org/abs/1708.00489)
 9. T. Defard, A. Setkov, A. Loesch, R. Audigier. *PaDiM: a Patch Distribution Modeling Framework for Anomaly Detection and Localization.* ICPR Workshops 2020. [arXiv:2011.08785](https://arxiv.org/abs/2011.08785)
 10. B. Rolih, D. Ameln, A. Vaidya, S. Akcay. *Divide and Conquer: High-Resolution Industrial Anomaly Detection via Memory Efficient Tiled Ensemble.* CVPR Workshops 2024. [arXiv:2403.04932](https://arxiv.org/abs/2403.04932)
+11. D. W. Capson, S.-K. Eng. *A Tiered-Color Illumination Approach for Machine Inspection of Solder Joints.* IEEE Transactions on Pattern Analysis and Machine Intelligence, 10(3), 1988. [doi:10.1109/34.3902](https://doi.org/10.1109/34.3902)
 
 ### Como citar
 

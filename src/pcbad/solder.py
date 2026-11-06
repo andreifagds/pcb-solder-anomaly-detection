@@ -6,11 +6,13 @@ solder joint. The solder map keeps a flagged ROI as a defect only when the part 
 the limit touches a solder joint (with a margin around it); otherwise the anomaly is reported
 as "away from solder" and ignored.
 
-How a pixel counts as solder, on each good photo (camera with red and blue/green lighting):
-  A) red/orange reflection that stands out from its surroundings: the slope of a solder
-     joint under the red LED. Silkscreen, traces and labels are blue only.
-  B) a filled, bright, saturated and roundish blob: a joint seen in blue/green. An opening
-     erases thin strokes (letters, silkscreen, traces).
+How a pixel counts as solder, on each good photo. The jig has three LED strips: red up high next
+to the camera, green in the middle, blue low next to the board. Shiny solder mirrors one strip per
+slope: flat parts look red, gentle slopes green, steep slopes blue (scripts/make_lighting_figure.py).
+  A) red/orange reflection that stands out from its surroundings: the flat, shiny part of a joint.
+     Silkscreen, traces and labels do not have that metal shine.
+  B) a filled, bright, saturated and roundish blob: the sloped sides of a joint, in blue/green.
+     An opening erases thin strokes (letters, silkscreen, traces).
 A pixel enters the map when it was solder in at least 10% of the good photos, and every joint
 gets a 25 px margin. A missing joint is still caught: the map comes from the good photos,
 so an empty pad is inside it.

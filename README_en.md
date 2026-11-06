@@ -142,6 +142,7 @@ Everything is built on anomalib [5], Intel's library for anomaly detection, and 
 | Item | Value |
 |---|---|
 | Camera | 26 MP industrial camera, 5120 × 5120 px, fixed over the jig |
+| Lighting | three LED strips at different heights: red next to the camera, green in the middle, blue level with the panel (Figure 4) |
 | Resolution on the board | about 22 px per millimetre |
 | ROI size | 512 × 512 px, about 23 × 23 mm: one group of joints plus a bit of context |
 | ROIs per panel | 110 to 120 today (132 in an earlier version) |
@@ -160,6 +161,15 @@ The production photos cannot be published. To have results anyone can reproduce,
 <p align="center">
   <img src="assets/photos/roi_mosaic.jpg" width="100%"><br>
   <i>Figure 3. Eight real ROIs of Board D. Even though the boards are identical, each region has different joints, components and text, and that is what each model learns as "normal".</i>
+</p>
+
+**The lighting.** Notice that the solder shows up red, green and blue in the photos. That is not a software effect: there are three LED strips mounted around the jig at different heights. The red one sits up high, next to the camera, the green one in the middle and the blue one low, almost level with the panel. Solder is shiny, close to a mirror, so each point of it only sends back to the camera the light that arrives from one specific angle, and that angle depends on how tilted the point is. The flat part reflects the top strip and comes out red. A gentle slope reflects the green one, and a steep slope the blue one. The green solder mask is matte, scatters light everywhere and stays dark.
+
+In practice, the color becomes a kind of height map: in an ordinary photo you can "see" whether the solder is high, low, full or missing. Missing solder usually leaves the pad flat and red, without the blue ring of the slope; excess solder becomes a ball with more slope, and so more blue; a bridge shows up as a colored band joining two pins. It is an old solder inspection technique, tiered-color illumination [11], and it helps PatchCore a lot: shape differences that would be subtle in gray levels turn into clear differences in color. It is also this color that the solder filter uses to find where the solder is on the board (Section 2.3).
+
+<p align="center">
+  <img src="assets/figures/lighting.gif" width="100%"><br>
+  <i>Figure 4. How the three LED strips turn into color in the photo. Left: a solder joint in cross-section; for each point, the line shows which strip the light reaching the camera comes from, and the strip below shows the color that ends up in the photo. Right: real Board D joints seen from above, with the same pattern: flat top in red, slope in blue.</i>
 </p>
 
 ### 2.2 How PatchCore works
@@ -217,7 +227,7 @@ The catch is that the network works with 518 × 518 px images, so the 5120 × 51
 
 <p align="center">
   <img src="assets/figures/visa_attempt1.png" width="100%"><br>
-  <i>Figure 4. The same thing reproduced on a public VisA board. Left: the defective board hidden among 16 good boards. Middle: the heat map of that "panel", where the defect barely shows. Right: the same board alone, where the defect is the hottest spot.</i>
+  <i>Figure 5. The same thing reproduced on a public VisA board. Left: the defective board hidden among 16 good boards. Middle: the heat map of that "panel", where the defect barely shows. Right: the same board alone, where the defect is the hottest spot.</i>
 </p>
 
 The lesson was that the limit was resolution, and the way out was to zoom in: crop regions of interest.
@@ -235,11 +245,6 @@ ROI 12  accidental short   → the most similar thing in the bank is the short f
 ```
 
 PatchCore knows nothing about position. If something is normal in one place, it becomes normal everywhere. I went to check it in the numbers, and the banks of two different ROIs came out twice as far apart from each other as the photos of the same ROI. They really are different normals.
-
-<p align="center">
-  <b>[photo to add]</b> <code>assets/photos/attempt2_intentional_short.png</code><br>
-  <i>Figure 5. Left: a ROI where the bridge is intentional. Right: a ROI where the same bridge is a defect. One shared model cannot tell them apart.</i>
-</p>
 
 That gave me the second lesson: each ROI needs its own model.
 
@@ -292,7 +297,7 @@ Sharing the backbone solved memory, but running it on the real line needed a few
 | Turning on a speed optimization of DINO | anomalib leaves it off by default | from 106 ms to 91 ms per ROI, same scores |
 | Solder filter: only reject anomalies that touch a solder joint | PatchCore flags what is new, and a scratch on the solder mask or some dust were rejected as much as a short | on 163 old rejections from three boards, 65 were dropped, each checked by hand as a scratch, stain or label; the known shorts were still rejected |
 
-The solder filter works like this. With the same good photos used for training, I build a map of where the solder is on the board: the red reflection the slope of a joint makes under the red LED, and the bright, round blobs of the joints seen from above. Letters, silkscreen and traces stay out, because they are blue or too thin. Every joint gets a 25 px margin around it. At inspection, a ROI above the limit is only rejected if the part above the limit touches that map. Missing solder is still caught: the map comes from the good photos, so the empty pad is inside it. This repository has a lean version of the filter ([`solder.py`](src/pcbad/solder.py)). One extra rule from production was left out: it also rejects when metal shine appears or disappears far from the joints (a solder ball sitting on the silkscreen, for example).
+The solder filter works like this. With the same good photos used for training, I build a map of where the solder is on the board: the red reflection with contrast, which is the flat, shiny part of the solder mirroring the top strip, and the bright, filled blue and green blobs, which are the slopes (Figure 4). Letters, silkscreen and traces stay out, because they do not have that metal shine and are too thin to become a blob. Every joint gets a 25 px margin around it. At inspection, a ROI above the limit is only rejected if the part above the limit touches that map. Missing solder is still caught: the map comes from the good photos, so the empty pad is inside it. This repository has a lean version of the filter ([`solder.py`](src/pcbad/solder.py)). One extra rule from production was left out: it also rejects when metal shine appears or disappears far from the joints (a solder ball sitting on the silkscreen, for example).
 
 The heat-map smoothing even led to a conversation with the anomalib team: I opened [issue #3780](https://github.com/open-edge-platform/anomalib/issues/3780) suggesting the change. The maintainer asked for more tests and, on the newer PyTorch version they use today, the original step was already fast. I withdrew the suggestion. The gain is real here, where I use PyTorch 2.5.1, but not on recent versions.
 
@@ -702,7 +707,8 @@ python scripts/infer.py --models models/visa_pcb1 --images data/visa_demo/pcb1/t
 | `python scripts/visa_layer_examples.py --visa data/visa/VisA --split data/visa/1cls.csv` | block-2 heat maps for Figure 14 | about 10 min |
 | `python scripts/bootstrap_ci.py --visa data/visa/VisA --split data/visa/1cls.csv` | statistical test in Section 3.6 | under 1 min |
 | `python scripts/make_visa_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | VisA charts | under 1 min |
-| `python scripts/make_visa_photo_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | Figures 4, 11 and 15 | about 15 min |
+| `python scripts/make_visa_photo_figures.py --visa data/visa/VisA --split data/visa/1cls.csv` | Figures 5, 11 and 15 | about 15 min |
+| `python scripts/make_lighting_figure.py` | Figure 4 (lighting animation) | seconds |
 
 The three figure scripts (`make_figures.py`, `make_visa_figures.py` and `make_visa_photo_figures.py`) build the English figures used here. Prefix the command with `FIG_LANG=pt` to get the Portuguese versions (files ending in `_pt`) used by the main README.
 
@@ -767,6 +773,7 @@ For each panel you get an image with every ROI framed in green, red (defect, out
 │   ├── make_figures.py        memory charts, overview figure and animation
 │   ├── make_visa_figures.py   VisA charts
 │   ├── make_visa_photo_figures.py  figures with VisA images
+│   ├── make_lighting_figure.py     animation of the three-LED-strip lighting
 │   ├── visa_layer_examples.py block-2 heat maps
 │   ├── bootstrap_ci.py        statistical test block 2 vs block 8
 │   ├── make_photo_figures.py  builds the real-photo figures from the production photos
@@ -794,6 +801,7 @@ This repository is a clean version of the inspection core of a much bigger in-ho
 8. O. Sener, S. Savarese. *Active Learning for Convolutional Neural Networks: A Core-Set Approach.* ICLR 2018. [arXiv:1708.00489](https://arxiv.org/abs/1708.00489)
 9. T. Defard, A. Setkov, A. Loesch, R. Audigier. *PaDiM: a Patch Distribution Modeling Framework for Anomaly Detection and Localization.* ICPR Workshops 2020. [arXiv:2011.08785](https://arxiv.org/abs/2011.08785)
 10. B. Rolih, D. Ameln, A. Vaidya, S. Akcay. *Divide and Conquer: High-Resolution Industrial Anomaly Detection via Memory Efficient Tiled Ensemble.* CVPR Workshops 2024. [arXiv:2403.04932](https://arxiv.org/abs/2403.04932)
+11. D. W. Capson, S.-K. Eng. *A Tiered-Color Illumination Approach for Machine Inspection of Solder Joints.* IEEE Transactions on Pattern Analysis and Machine Intelligence, 10(3), 1988. [doi:10.1109/34.3902](https://doi.org/10.1109/34.3902)
 
 ### How to cite
 
