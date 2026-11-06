@@ -823,7 +823,7 @@ O código está sob a licença [MIT](LICENSE). As fotos dos painéis em `assets/
 
 Obrigado à professora Manoela Kohler pela orientação, à equipe do ICA / PUC-Rio e ao pessoal da linha de produção e da engenharia de testes, que separou painel, marcou defeito e teve paciência com os falsos defeitos das primeiras versões.
 
-E um obrigado ao Claude Code, que programou boa parte disso aqui sem errar nada. Os erros foram todos meus, até chegar na solução que funcionou.
+E um obrigado ao Claude Code, que programou boa parte disso aqui sem errar nada. Os erros foram todos meus, até chegar na solução que funcionou kkkkk.
 
 ---
 
